@@ -135,6 +135,22 @@
                     <div id="configured-fleet-list" class="space-y-2"></div>
                 </div>
 
+                <!-- System Power Controls -->
+                <div class="bg-gray-900 border border-gray-800 rounded-xl p-5 shadow-lg space-y-4">
+                    <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                        <i class="ph-fill ph-power text-red-400"></i> System Power
+                    </h3>
+                    <p class="text-gray-300 text-sm">Control kiosk power state directly from the interface.</p>
+                    <div class="flex gap-4 pt-1">
+                        <button onclick="rebootSystem()" class="px-5 py-2.5 bg-yellow-600/20 hover:bg-yellow-600 text-yellow-400 hover:text-white rounded-lg font-bold text-sm transition-colors border border-yellow-800 cursor-pointer flex items-center gap-2">
+                            <i class="ph-bold ph-arrow-clockwise text-lg"></i> Reboot Kiosk
+                        </button>
+                        <button onclick="shutdownSystem()" class="px-5 py-2.5 bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white rounded-lg font-bold text-sm transition-colors border border-red-800 cursor-pointer flex items-center gap-2">
+                            <i class="ph-bold ph-power text-lg"></i> Shutdown Kiosk
+                        </button>
+                    </div>
+                </div>
+
                 <!-- Wi-Fi Configuration -->
                 <div class="bg-gray-900 border border-gray-800 rounded-xl p-5 shadow-lg space-y-4">
                     <h3 class="text-lg font-bold text-white flex items-center gap-2">
@@ -171,6 +187,7 @@
 
         async function initApp() {
             printers = await window.electronAPI.getPrinters();
+            openTabs = printers.map(p => p.id); // Ensure all configured printers open as tabs automatically
             renderTabs();
             renderDashboard();
             renderFleetManagement();
@@ -202,6 +219,20 @@
             const password = document.getElementById('wifi-password-input').value;
             const res = await window.electronAPI.connectWifi({ ssid, password });
             showToast(res.success ? `Connected to ${ssid}` : `Connection failed: ${res.error}`);
+        }
+
+        function rebootSystem() {
+            if (confirm('Are you sure you want to reboot the kiosk?')) {
+                showToast('Rebooting system...');
+                window.electronAPI.rebootSystem();
+            }
+        }
+
+        function shutdownSystem() {
+            if (confirm('Are you sure you want to shutdown the kiosk?')) {
+                showToast('Shutting down system...');
+                window.electronAPI.shutdownSystem();
+            }
         }
 
         async function runSubnetScan() {
@@ -252,9 +283,11 @@
                 tempBed: '60.0'
             };
             printers.push(newPrinter);
+            if (!openTabs.includes(newPrinter.id)) openTabs.push(newPrinter.id);
             await window.electronAPI.savePrinters(printers);
             renderDashboard();
             renderFleetManagement();
+            renderTabs();
             showToast(`Added ${name} successfully!`);
         }
 
@@ -275,11 +308,13 @@
                 tempBed: '60.0'
             };
             printers.push(newPrinter);
+            if (!openTabs.includes(newPrinter.id)) openTabs.push(newPrinter.id);
             await window.electronAPI.savePrinters(printers);
             document.getElementById('manual-name-input').value = '';
             document.getElementById('manual-ip-input').value = '';
             renderDashboard();
             renderFleetManagement();
+            renderTabs();
             showToast(`Added ${name} manually.`);
         }
 

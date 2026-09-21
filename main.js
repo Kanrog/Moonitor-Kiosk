@@ -59,6 +59,19 @@ ipcMain.handle('save-printers', (event, printers) => {
   }
 });
 
+// System Power IPC Handlers
+ipcMain.handle('system-reboot', () => {
+  exec('sudo reboot', (err) => {
+    if (err) console.error('Reboot failed:', err);
+  });
+});
+
+ipcMain.handle('system-shutdown', () => {
+  exec('sudo shutdown -h now', (err) => {
+    if (err) console.error('Shutdown failed:', err);
+  });
+});
+
 // IPC Handlers for System & Network Operations
 ipcMain.handle('get-system-info', () => {
   let ipAddress = '127.0.0.1';
@@ -73,7 +86,7 @@ ipcMain.handle('get-system-info', () => {
   return { ip: ipAddress, port: 3000 };
 });
 
-// Batched Subnet Scanner with Live Progress Broadcast
+// Highly reliable, slowed-down subnet scanner for Klipper instances (Port 7125)
 ipcMain.handle('scan-subnet', async () => {
   return new Promise(async (resolve) => {
     let subnetBase = '192.168.0';
@@ -92,17 +105,17 @@ ipcMain.handle('scan-subnet', async () => {
 
     const discovered = [];
     const totalHosts = 254;
-    const batchSize = 10;
+    const batchSize = 4; // Smaller batch size to prevent network buffer saturation
     let completedHosts = 0;
 
     const checkHost = (ip) => {
       return new Promise((res) => {
         const socket = new net.Socket();
-        socket.setTimeout(600); // Generous timeout for reliability
+        socket.setTimeout(800); // Generous timeout to catch slow responders
 
         socket.on('connect', () => {
           socket.destroy();
-          http.get(`http://${ip}:7125/server/info`, { timeout: 800 }, (resp) => {
+          http.get(`http://${ip}:7125/server/info`, { timeout: 1000 }, (resp) => {
             let data = '';
             resp.on('data', chunk => { data += chunk; });
             resp.on('end', () => {
@@ -151,12 +164,14 @@ ipcMain.handle('scan-subnet', async () => {
       });
     };
 
+    // Scan in controlled small batches with a brief pause between batches
     for (let i = 1; i <= totalHosts; i += batchSize) {
       const batchPromises = [];
       for (let j = i; j < i + batchSize && j <= totalHosts; j++) {
         batchPromises.push(checkHost(`${subnetBase}.${j}`));
       }
       await Promise.all(batchPromises);
+      await new Promise(r => setTimeout(r, 60)); // Inter-batch delay for absolute reliability
     }
 
     resolve(discovered);
