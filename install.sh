@@ -4,7 +4,7 @@ set -e
 echo "Updating system package lists..."
 sudo apt update && sudo apt upgrade -y
 
-echo "Installing core prerequisites (git, curl, build-essential)..."
+echo "Installing core prerequisites..."
 sudo apt install -y curl git build-essential
 
 echo "Installing Node.js LTS..."
@@ -15,7 +15,7 @@ else
     echo "Node.js is already installed ($(node -v))."
 fi
 
-echo "Installing Electron system runtime libraries..."
+echo "Installing Electron system runtime libraries & GTK3..."
 sudo apt install -y \
     libglib2.0-0t64 \
     libnss3 \
@@ -44,9 +44,19 @@ sudo apt install -y \
     libxrender1 \
     libxss1 \
     libxtst6 \
-    libasound2
+    libasound2 \
+    libgtk-3-0t64
+
+echo "Installing lightweight Kiosk X server packages (No full desktop)..."
+sudo apt install -y xserver-xorg x11-xserver-utils openbox xinit
+
+echo "Configuring xinitrc for direct app launch..."
+INSTALL_DIR="$(pwd)"
+echo "exec openbox-session &" > ~/.xinitrc
+echo "cd $INSTALL_DIR && npm start" >> ~/.xinitrc
+chmod +x ~/.xinitrc
 
 echo "Installing project NPM dependencies..."
 npm install
 
-echo "Moonitor-Kiosk installation completed successfully!"
+echo "Moonitor-Kiosk installation and kiosk configuration completed successfully!"

@@ -18,7 +18,6 @@ echo "[+] Stopping moonitor-kiosk service..."
 systemctl stop moonitor-kiosk
 
 echo "[+] Copying latest application files to $INSTALL_DIR..."
-# Sync current directory files to install dir, ignoring git metadata
 rsync -av --exclude='.git' ./ "$INSTALL_DIR/"
 
 echo "[+] Updating Node.js dependencies..."

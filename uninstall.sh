@@ -7,16 +7,20 @@ if [ "$EUID" -ne 0 ]; then
   exit 1
 fi
 
-echo "[+] Stopping and disabling moonitor-kiosk service..."
-systemctl stop moonitor-kiosk
-systemctl disable moonitor-kiosk
+INSTALL_DIR="/opt/moonitor-kiosk"
 
-echo "[+] Removing systemd service configuration..."
+echo "[+] Stopping and disabling moonitor-kiosk service..."
+systemctl stop moonitor-kiosk || true
+systemctl disable moonitor-kiosk || true
+
+echo "[+] Removing systemd service file..."
 rm -f /etc/systemd/system/moonitor-kiosk.service
 systemctl daemon-reload
-systemctl reset-failed
 
-echo "[+] Removing application files from /opt/moonitor-kiosk..."
-rm -rf /opt/moonitor-kiosk
+echo "[+] Removing application files from $INSTALL_DIR..."
+rm -rf "$INSTALL_DIR"
 
-echo "[+] Moonitor Kiosk has been completely uninstalled from this machine."
+echo "[+] Cleaning up local user configuration..."
+rm -f ~/.xinitrc
+
+echo "[+] Moonitor-Kiosk has been completely uninstalled from the system."
