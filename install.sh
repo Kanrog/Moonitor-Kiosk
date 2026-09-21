@@ -2,25 +2,33 @@
 set -e
 
 if [ "$EUID" -ne 0 ]; then
-  echo "[-] Please run as root: sudo bash install.sh"
+  echo "[-] Please run with sudo: sudo bash install.sh"
   exit 1
 fi
 
-echo "Updating system package lists..."
+# Determine the actual non-root user running sudo, default to root if not using sudo
+TARGET_USER="${SUDO_USER:-root}"
+if [ "$TARGET_USER" = "root" ]; then
+    TARGET_HOME="/root"
+else
+    TARGET_HOME="/home/$TARGET_USER"
+fi
+
+echo "[+] Updating system package lists..."
 apt update && apt upgrade -y
 
-echo "Installing core prerequisites..."
+echo "[+] Installing core prerequisites..."
 apt install -y curl git build-essential rsync
 
-echo "Installing Node.js LTS..."
+echo "[+] Installing Node.js LTS..."
 if ! command -v node &> /dev/null; then
-    curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+    curl -fsSL https://deb.nodesource.com/setup_lts.x | bash -
     apt install -y nodejs
 else
     echo "Node.js is already installed ($(node -v))."
 fi
 
-echo "Installing Electron system runtime libraries & GTK3..."
+echo "[+] Installing Electron runtime libraries & GTK3..."
 apt install -y \
     libglib2.0-0t64 \
     libnss3 \
@@ -52,39 +60,44 @@ apt install -y \
     libasound2 \
     libgtk-3-0t64
 
-echo "Installing lightweight Kiosk X server packages..."
+echo "[+] Installing lightweight Kiosk X server packages..."
 apt install -y xserver-xorg x11-xserver-utils openbox xinit
 
-echo "Setting up installation directory at /opt/moonitor-kiosk..."
+echo "[+] Setting up installation directory at /opt/moonitor-kiosk..."
 INSTALL_DIR="/opt/moonitor-kiosk"
 mkdir -p "$INSTALL_DIR"
 rsync -av --exclude='.git' ./ "$INSTALL_DIR/"
 
-echo "Installing project NPM dependencies in $INSTALL_DIR..."
+echo "[+] Installing project NPM dependencies in $INSTALL_DIR..."
 cd "$INSTALL_DIR"
 npm install
 
-echo "Creating systemd service..."
-cat << 'EOF' > /etc/systemd/system/moonitor-kiosk.service
-[Unit]
-Description=Moonitor Kiosk
-After=network.target
-
+echo "[+] Configuring automatic login on tty1 for user: $TARGET_USER..."
+mkdir -p /etc/systemd/system/getty@tty1.service.d
+cat << EOF > /etc/systemd/system/getty@tty1.service.d/autologin.conf
 [Service]
-Type=simple
-User=root
-WorkingDirectory=/opt/moonitor-kiosk
-ExecStart=/usr/bin/npm start
-Restart=always
-Environment=DISPLAY=:0
-
-[Install]
-WantedBy=multi-user.target
+ExecStart=
+ExecStart=-/sbin/agetty --autologin $TARGET_USER --noclear %I \$TERM
 EOF
 
-echo "Enabling and starting systemd service..."
-systemctl daemon-reload
-systemctl enable moonitor-kiosk
-systemctl start moonitor-kiosk
+echo "[+] Configuring X session auto-start for $TARGET_USER..."
+cat << 'EOF' > "$TARGET_HOME/.xinitrc"
+exec openbox-session &
+cd /opt/moonitor-kiosk && npm start
+EOF
+chown "$TARGET_USER:$TARGET_USER" "$TARGET_HOME/.xinitrc"
+chmod +x "$TARGET_HOME/.xinitrc"
 
-echo "Moonitor-Kiosk installation and systemd service deployment completed successfully!"
+cat << 'EOF' >> "$TARGET_HOME/.bash_profile"
+
+# Auto-start X11 kiosk on login to tty1
+if [ -z "$DISPLAY" ] && [ "$(tty)" = "/dev/tty1" ]; then
+    exec startx
+fi
+EOF
+chown "$TARGET_USER:$TARGET_USER" "$TARGET_HOME/.bash_profile"
+
+systemctl daemon-reload
+systemctl enable getty@tty1
+
+echo "[+] Moonitor-Kiosk complete kiosk installation finished successfully!"
