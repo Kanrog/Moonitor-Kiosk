@@ -73,13 +73,12 @@ ipcMain.handle('get-system-info', () => {
   return { ip: ipAddress, port: 3000 };
 });
 
-// Batched Subnet Scanner for Moonraker Instances (Port 7125)
+// Batched Subnet Scanner with Live Progress Broadcast
 ipcMain.handle('scan-subnet', async () => {
   return new Promise(async (resolve) => {
     let subnetBase = '192.168.0';
     const interfaces = os.networkInterfaces();
     
-    // Dynamically detect local subnet base
     for (const name of Object.keys(interfaces)) {
       for (const netInfo of interfaces[name]) {
         if (netInfo.family === 'IPv4' && !netInfo.internal) {
@@ -93,43 +92,65 @@ ipcMain.handle('scan-subnet', async () => {
 
     const discovered = [];
     const totalHosts = 254;
-    const batchSize = 10; // Scan 10 IPs at a time to prevent socket exhaustion
+    const batchSize = 10;
+    let completedHosts = 0;
 
     const checkHost = (ip) => {
       return new Promise((res) => {
         const socket = new net.Socket();
-        socket.setTimeout(400);
+        socket.setTimeout(600); // Generous timeout for reliability
 
         socket.on('connect', () => {
           socket.destroy();
-          http.get(`http://${ip}:7125/server/info`, { timeout: 600 }, (resp) => {
+          http.get(`http://${ip}:7125/server/info`, { timeout: 800 }, (resp) => {
             let data = '';
             resp.on('data', chunk => { data += chunk; });
             resp.on('end', () => {
-              let printerName = `Klipper (${ip})`;
+              let printerName = `Klipper Printer (${ip})`;
               try {
                 const json = JSON.parse(data);
-                if (json && json.result) {
-                  printerName = `Klipper Printer (${ip})`;
+                if (json && json.result && json.result.hostname) {
+                  printerName = json.result.hostname;
                 }
               } catch (e) {}
               discovered.push({ ip: ip, name: printerName });
+              completedHosts++;
+              if (mainWindow) {
+                mainWindow.webContents.send('scan-progress', { ip, current: completedHosts, total: totalHosts, subnet: subnetBase });
+              }
               res();
             });
           }).on('error', () => {
             discovered.push({ ip: ip, name: `Klipper (${ip})` });
+            completedHosts++;
+            if (mainWindow) {
+              mainWindow.webContents.send('scan-progress', { ip, current: completedHosts, total: totalHosts, subnet: subnetBase });
+            }
             res();
           });
         });
 
-        socket.on('timeout', () => { socket.destroy(); res(); });
-        socket.on('error', () => { socket.destroy(); res(); });
+        socket.on('timeout', () => { 
+          socket.destroy(); 
+          completedHosts++;
+          if (mainWindow) {
+            mainWindow.webContents.send('scan-progress', { ip, current: completedHosts, total: totalHosts, subnet: subnetBase });
+          }
+          res(); 
+        });
+        socket.on('error', () => { 
+          socket.destroy(); 
+          completedHosts++;
+          if (mainWindow) {
+            mainWindow.webContents.send('scan-progress', { ip, current: completedHosts, total: totalHosts, subnet: subnetBase });
+          }
+          res(); 
+        });
 
         socket.connect(7125, ip);
       });
     };
 
-    // Execute scanning in controlled batches of 10
     for (let i = 1; i <= totalHosts; i += batchSize) {
       const batchPromises = [];
       for (let j = i; j < i + batchSize && j <= totalHosts; j++) {

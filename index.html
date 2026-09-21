@@ -88,9 +88,22 @@
                         <i class="ph-fill ph-radar text-blue-400"></i> Subnet Printer Discovery
                     </h3>
                     <p class="text-gray-300 text-sm">Scan your local network to automatically detect Klipper / Moonraker instances.</p>
-                    <button onclick="runSubnetScan()" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold text-sm transition-colors shadow cursor-pointer flex items-center gap-2">
+                    
+                    <button id="scan-btn" onclick="runSubnetScan()" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold text-sm transition-colors shadow cursor-pointer flex items-center gap-2">
                         <i class="ph-bold ph-magnifying-glass"></i> Run Subnet Scan
                     </button>
+
+                    <!-- Scan Progress Box -->
+                    <div id="scan-progress-box" class="hidden space-y-2 bg-gray-950 border border-gray-800 p-4 rounded-lg">
+                        <div class="flex justify-between text-xs text-gray-300 font-mono">
+                            <span id="scan-status-text">Searching IP range...</span>
+                            <span id="scan-percentage">0%</span>
+                        </div>
+                        <div class="w-full bg-gray-800 h-2 rounded-full overflow-hidden">
+                            <div id="scan-progress-bar" class="bg-blue-500 h-full w-0 transition-all duration-150"></div>
+                        </div>
+                    </div>
+
                     <div id="scan-results-container" class="space-y-2 mt-3"></div>
                 </div>
 
@@ -106,7 +119,7 @@
                         </div>
                         <div class="space-y-1">
                             <label class="text-xs text-gray-400 font-medium">IP Address or Hostname</label>
-                            <input id="manual-ip-input" type="text" placeholder="e.g. 192.168.1.150" class="w-full bg-gray-950 border border-gray-800 rounded-lg px-3 py-2.5 text-sm text-gray-200 outline-none focus:border-blue-500">
+                            <input id="manual-ip-input" type="text" placeholder="e.g. 192.168.0.150" class="w-full bg-gray-950 border border-gray-800 rounded-lg px-3 py-2.5 text-sm text-gray-200 outline-none focus:border-blue-500">
                         </div>
                     </div>
                     <button onclick="addPrinterManually()" class="px-5 py-2.5 bg-green-600 hover:bg-green-500 text-white rounded-lg font-bold text-sm transition-colors shadow cursor-pointer">
@@ -164,10 +177,13 @@
             refreshSystemInfo();
             loadWifiNetworks();
 
-            // If blank install on initial boot, switch straight to settings or prompt user
-            if (printers.length === 0) {
-                showToast('Welcome to Moonitor-Kiosk! No printers configured.');
-            }
+            // Listen for live scan progress updates from main process
+            window.electronAPI.onScanProgress((data) => {
+                const percent = Math.round((data.current / data.total) * 100);
+                document.getElementById('scan-status-text').textContent = `Searching IP range ${data.subnet}.${data.current}/${data.total} (${data.ip})...`;
+                document.getElementById('scan-percentage').textContent = `${percent}%`;
+                document.getElementById('scan-progress-bar').style.width = `${percent}%`;
+            });
         }
 
         async function refreshSystemInfo() {
@@ -189,11 +205,25 @@
         }
 
         async function runSubnetScan() {
-            showToast('Scanning subnet for Moonraker API endpoints...');
-            const discovered = await window.electronAPI.scanSubnet();
+            const scanBtn = document.getElementById('scan-btn');
+            const progressBox = document.getElementById('scan-progress-box');
             const container = document.getElementById('scan-results-container');
+
+            scanBtn.disabled = true;
+            scanBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            progressBox.classList.remove('hidden');
+            container.innerHTML = '';
+            showToast('Scanning subnet for Klipper instances...');
+
+            const discovered = await window.electronAPI.scanSubnet();
+
+            progressBox.classList.add('hidden');
+            scanBtn.disabled = false;
+            scanBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+
             if (discovered.length === 0) {
                 container.innerHTML = `<p class="text-sm text-gray-400">No printers discovered on subnet.</p>`;
+                showToast('Scan complete. No printers found.');
                 return;
             }
             container.innerHTML = `<p class="text-xs text-green-400 font-semibold mb-2">Discovered ${discovered.length} printer(s):</p>` + 
@@ -203,17 +233,17 @@
                             <span class="font-bold text-white">${p.name}</span>
                             <span class="text-xs text-gray-400 ml-2 font-mono">${p.ip}</span>
                         </div>
-                        <button onclick="importDiscoveredPrinter('${p.name}', '${p.ip}')" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-lg cursor-pointer">
+                        <button onclick="importDiscoveredPrinter('${p.name.replace(/'/g, "\\'")}', '${p.ip}')" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-lg cursor-pointer">
                             Add to Fleet
                         </button>
                     </div>
                 `).join('');
-            showToast(`Scan complete. Found ${discovered.length} printer(s).`);
+            showToast(`Scan complete. Discovered ${discovered.length} active printer(s).`);
         }
 
         async function importDiscoveredPrinter(name, ip) {
             const newPrinter = {
-                id: `printer_${Date.now()}`,
+                id: `printer_${Date.now()}_${Math.floor(Math.random()*1000)}`,
                 name: name,
                 ip: ip,
                 ratioLabel: '16:9',
@@ -236,7 +266,7 @@
                 return;
             }
             const newPrinter = {
-                id: `printer_${Date.now()}`,
+                id: `printer_${Date.now()}_${Math.floor(Math.random()*1000)}`,
                 name: name,
                 ip: ip,
                 ratioLabel: '16:9',
