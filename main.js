@@ -2,6 +2,8 @@ const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const os = require('os');
 const fs = require('fs');
+const net = require('net');
+const http = require('http');
 const { exec } = require('child_process');
 
 let mainWindow;
@@ -44,7 +46,7 @@ ipcMain.handle('get-printers', () => {
   } catch (e) {
     console.error('Failed to load printers.json:', e);
   }
-  return []; // Default to blank install
+  return [];
 });
 
 ipcMain.handle('save-printers', (event, printers) => {
@@ -62,25 +64,81 @@ ipcMain.handle('get-system-info', () => {
   let ipAddress = '127.0.0.1';
   const interfaces = os.networkInterfaces();
   for (const name of Object.keys(interfaces)) {
-    for (const net of interfaces[name]) {
-      if (net.family === 'IPv4' && !net.internal) {
-        ipAddress = net.address;
+    for (const netInfo of interfaces[name]) {
+      if (netInfo.family === 'IPv4' && !netInfo.internal) {
+        ipAddress = netInfo.address;
       }
     }
   }
   return { ip: ipAddress, port: 3000 };
 });
 
+// Real Local Subnet Scanner for Moonraker Instances (Port 7125)
 ipcMain.handle('scan-subnet', async () => {
-  // Simulated subnet scanner discovering Moonraker API endpoints
   return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve([
-        { ip: '192.168.1.101', name: 'Printer 01' },
-        { ip: '192.168.1.102', name: 'Printer 02' },
-        { ip: '192.168.1.103', name: 'Printer 03' }
-      ]);
-    }, 1200);
+    let subnetBase = '192.168.1';
+    const interfaces = os.networkInterfaces();
+    
+    // Dynamically detect local subnet base
+    for (const name of Object.keys(interfaces)) {
+      for (const netInfo of interfaces[name]) {
+        if (netInfo.family === 'IPv4' && !netInfo.internal) {
+          const parts = netInfo.address.split('.');
+          if (parts.length === 4) {
+            subnetBase = `${parts[0]}.${parts[1]}.${parts[2]}`;
+          }
+        }
+      }
+    }
+
+    const discovered = [];
+    const promises = [];
+    const totalHosts = 254;
+
+    const checkHost = (ip) => {
+      return new Promise((res) => {
+        const socket = new net.Socket();
+        socket.setTimeout(350); // Fast timeout for responsiveness
+
+        socket.on('connect', () => {
+          socket.destroy();
+          // Verify Moonraker endpoint
+          http.get(`http://${ip}:7125/server/info`, { timeout: 500 }, (resp) => {
+            let data = '';
+            resp.on('data', chunk => { data += chunk; });
+            resp.on('end', () => {
+              let printerName = `Klipper Printer`;
+              try {
+                const json = JSON.parse(data);
+                if (json && json.result) {
+                  printerName = `Klipper (${ip})` ;
+                }
+              } catch (e) {}
+              discovered.push({ ip: ip, name: printerName });
+              res();
+            });
+          }).on('error', () => {
+            // Port 7125 open, add as discovered instance
+            discovered.push({ ip: ip, name: `Klipper (${ip})` });
+            res();
+          });
+        });
+
+        socket.on('timeout', () => { socket.destroy(); res(); });
+        socket.on('error', () => { socket.destroy(); res(); });
+
+        socket.connect(7125, ip);
+      });
+    };
+
+    // Scan all hosts in the local subnet concurrently
+    for (let i = 1; i <= totalHosts; i++) {
+      promises.push(checkHost(`${subnetBase}.${i}`));
+    }
+
+    Promise.all(promises).then(() => {
+      resolve(discovered);
+    });
   });
 });
 
