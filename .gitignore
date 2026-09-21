@@ -1,0 +1,10 @@
+# Dependencies
+node_modules/
+
+# OS Specific Files
+.DS_Store
+Thumbs.db
+
+# Build / Distribution Outputs (if you build binaries later)
+dist/
+build/
