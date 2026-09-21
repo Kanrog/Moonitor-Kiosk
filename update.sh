@@ -1,6 +1,6 @@
 #!/bin/bash
-# Moonitor Kiosk Updater for Debian / Raspberry Pi OS
-# Run from your source directory with: sudo ./update.sh
+# Moonitor Kiosk Updater
+# Run with: sudo ./update.sh
 
 if [ "$EUID" -ne 0 ]; then
   echo "[-] Please run as root: sudo ./update.sh"
@@ -14,17 +14,11 @@ if [ ! -d "$INSTALL_DIR" ]; then
   exit 1
 fi
 
-echo "[+] Stopping moonitor-kiosk service..."
-systemctl stop moonitor-kiosk
-
 echo "[+] Copying latest application files to $INSTALL_DIR..."
 rsync -av --exclude='.git' ./ "$INSTALL_DIR/"
 
 echo "[+] Updating Node.js dependencies..."
 cd "$INSTALL_DIR"
 npm install
-
-echo "[+] Restarting moonitor-kiosk service..."
-systemctl start moonitor-kiosk
 
 echo "[+] Update completed successfully!"

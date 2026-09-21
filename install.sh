@@ -59,8 +59,11 @@ apt install -y \
     libasound2 \
     libgtk-3-0t64
 
-echo "[+] Installing raw X server packages (No window manager)..."
+echo "[+] Installing raw X server packages..."
 apt install -y xserver-xorg x11-xserver-utils xinit
+
+echo "[+] Ensuring system boots into multi-user text target..."
+systemctl set-default multi-user.target
 
 echo "[+] Setting up installation directory at /opt/moonitor-kiosk..."
 INSTALL_DIR="/opt/moonitor-kiosk"
@@ -87,16 +90,18 @@ EOF
 chown "$TARGET_USER:$TARGET_USER" "$TARGET_HOME/.xinitrc"
 chmod +x "$TARGET_HOME/.xinitrc"
 
-cat << 'EOF' >> "$TARGET_HOME/.bash_profile"
+if ! grep -q "startx" "$TARGET_HOME/.bash_profile" 2>/dev/null; then
+    cat << 'EOF' >> "$TARGET_HOME/.bash_profile"
 
 # Auto-start X11 kiosk on login to tty1
 if [ -z "$DISPLAY" ] && [ "$(tty)" = "/dev/tty1" ]; then
     exec startx
 fi
 EOF
-chown "$TARGET_USER:$TARGET_USER" "$TARGET_HOME/.bash_profile"
+    chown "$TARGET_USER:$TARGET_USER" "$TARGET_HOME/.bash_profile"
+fi
 
 systemctl daemon-reload
 systemctl enable getty@tty1
 
-echo "[+] Moonitor-Kiosk pure kiosk installation finished successfully!"
+echo "[+] Moonitor-Kiosk complete pure kiosk installation finished successfully!"

@@ -43,21 +43,21 @@
 
             <div id="printer-grid" class="flex-1 w-full h-full min-h-0 grid grid-cols-2 md:grid-cols-3 grid-rows-3 gap-2 md:gap-4 transition-opacity duration-300"></div>
 
-            <button id="btn-next" onclick="nextPage()" class="absolute right-0 top-1/2 -translate-y-1/2 z-30 bg-gray-800/90 hover:bg-gray-700 text-white p-3 md:p-4 rounded-l-xl shadow-2xl transition-all border border-r-0 border-gray-600 backdrop-blur-sm cursor-pointer">
+            <button id="btn-next" onclick="nextPage()" class="absolute right-0 top-1/2 -translate-y-1/2 z-30 bg-gray-800/90 hover:bg-gray-700 text-white p-3 md:p-4 rounded-l-xl shadow-2xl transition-all border border-r-0 border-gray-600 hidden backdrop-blur-sm cursor-pointer">
                 <i class="ph-bold ph-caret-right text-3xl"></i>
             </button>
 
             <div class="h-4 mt-2 flex-shrink-0 flex justify-center items-center gap-2 w-full" id="pagination-dots"></div>
         </div>
 
-        <!-- Webview Placeholder View -->
+        <!-- Webview / Printer Interface View -->
         <div id="view-webview" class="hidden absolute inset-0 bg-gray-950 flex-col items-center justify-center w-full h-full p-4 md:p-8 z-10">
             <div class="bg-gray-900 border border-gray-800 rounded-2xl w-full h-full flex flex-col items-center justify-center shadow-inner relative overflow-hidden">
                 <i class="ph ph-browser text-7xl text-gray-700 mb-4"></i>
-                <h2 class="text-3xl md:text-4xl font-bold text-gray-100 mb-2 text-center">Mainsail / Fluidd Webview Interface</h2>
+                <h2 class="text-3xl md:text-4xl font-bold text-gray-100 mb-2 text-center">Mainsail / Fluidd Web Interface</h2>
                 <div class="mt-4 px-6 py-2 bg-gray-950 rounded-full border border-gray-800 flex items-center gap-3">
                     <span class="w-3 h-3 rounded-full bg-green-500 animate-pulse"></span>
-                    <span class="text-xl text-gray-300">Connected to: <span id="webview-printer-name" class="font-bold text-white">Printer Name</span></span>
+                    <span class="text-xl text-gray-300">Connected to: <span id="webview-printer-name" class="font-bold text-white">Printer Name</span> (<span id="webview-printer-ip" class="font-mono text-blue-400">IP</span>)</span>
                 </div>
             </div>
         </div>
@@ -67,9 +67,9 @@
             <div class="max-w-4xl mx-auto w-full space-y-6">
                 <div>
                     <h2 class="text-2xl font-bold text-white flex items-center gap-3">
-                        <i class="ph-fill ph-gear text-blue-500"></i> Kiosk & Network Configuration
+                        <i class="ph-fill ph-gear text-blue-500"></i> Kiosk & Fleet Configuration
                     </h2>
-                    <p class="text-gray-400 text-sm mt-1">Manage system network interfaces, Wi-Fi connections, and subnet discovery parameters.</p>
+                    <p class="text-gray-400 text-sm mt-1">Manage system network parameters, discover printers on your subnet, or configure devices manually.</p>
                 </div>
 
                 <div class="bg-gray-900 border border-gray-800 rounded-xl p-5 shadow-lg flex items-center justify-between">
@@ -82,29 +82,64 @@
                     </button>
                 </div>
 
+                <!-- Subnet Scanner & Discovery -->
+                <div class="bg-gray-900 border border-gray-800 rounded-xl p-5 shadow-lg space-y-4">
+                    <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                        <i class="ph-fill ph-radar text-blue-400"></i> Subnet Printer Discovery
+                    </h3>
+                    <p class="text-gray-300 text-sm">Scan your local network to automatically detect Klipper / Moonraker instances.</p>
+                    <button onclick="runSubnetScan()" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold text-sm transition-colors shadow cursor-pointer flex items-center gap-2">
+                        <i class="ph-bold ph-magnifying-glass"></i> Run Subnet Scan
+                    </button>
+                    <div id="scan-results-container" class="space-y-2 mt-3"></div>
+                </div>
+
+                <!-- Manual Printer Addition -->
+                <div class="bg-gray-900 border border-gray-800 rounded-xl p-5 shadow-lg space-y-4">
+                    <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                        <i class="ph-fill ph-plus-circle text-green-400"></i> Add Printer Manually
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="space-y-1">
+                            <label class="text-xs text-gray-400 font-medium">Printer Name</label>
+                            <input id="manual-name-input" type="text" placeholder="e.g. Rook MK2" class="w-full bg-gray-950 border border-gray-800 rounded-lg px-3 py-2.5 text-sm text-gray-200 outline-none focus:border-blue-500">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-xs text-gray-400 font-medium">IP Address or Hostname</label>
+                            <input id="manual-ip-input" type="text" placeholder="e.g. 192.168.1.150" class="w-full bg-gray-950 border border-gray-800 rounded-lg px-3 py-2.5 text-sm text-gray-200 outline-none focus:border-blue-500">
+                        </div>
+                    </div>
+                    <button onclick="addPrinterManually()" class="px-5 py-2.5 bg-green-600 hover:bg-green-500 text-white rounded-lg font-bold text-sm transition-colors shadow cursor-pointer">
+                        Add Printer to Fleet
+                    </button>
+                </div>
+
+                <!-- Configured Fleet Management -->
+                <div class="bg-gray-900 border border-gray-800 rounded-xl p-5 shadow-lg space-y-4">
+                    <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                        <i class="ph-fill ph-printer-3d text-purple-400"></i> Configured Fleet (<span id="fleet-count">0</span>)
+                    </h3>
+                    <div id="configured-fleet-list" class="space-y-2"></div>
+                </div>
+
+                <!-- Wi-Fi Configuration -->
                 <div class="bg-gray-900 border border-gray-800 rounded-xl p-5 shadow-lg space-y-4">
                     <h3 class="text-lg font-bold text-white flex items-center gap-2">
                         <i class="ph-fill ph-wifi text-green-400"></i> Wi-Fi Network Selection
                     </h3>
-                    
                     <div class="space-y-2">
                         <label class="text-xs text-gray-400 font-medium">Available SSIDs</label>
                         <select id="wifi-network-select" class="w-full bg-gray-950 border border-gray-800 rounded-lg px-3 py-2.5 text-sm text-gray-200 outline-none focus:border-blue-500">
                             <option>Scanning networks...</option>
                         </select>
                     </div>
-
                     <div class="space-y-2">
                         <label class="text-xs text-gray-400 font-medium">Network Password</label>
                         <input id="wifi-password-input" type="password" placeholder="Enter Wi-Fi password" class="w-full bg-gray-950 border border-gray-800 rounded-lg px-3 py-2.5 text-sm text-gray-200 outline-none focus:border-blue-500">
                     </div>
-
-                    <div class="pt-2 flex gap-3">
+                    <div class="pt-2">
                         <button onclick="connectWifi()" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold text-sm transition-colors shadow cursor-pointer">
                             Connect Network
-                        </button>
-                        <button onclick="runSubnetScan()" class="px-5 py-2.5 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg font-bold text-sm transition-colors border border-gray-700 cursor-pointer">
-                            Scan Subnet for Printers
                         </button>
                     </div>
                 </div>
@@ -115,27 +150,24 @@
     <div id="toast-container" class="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
     <script>
-        const aspectRatios = [{ label: '16:9', val: '16/9' }, { label: '4:3', val: '4/3' }, { label: '1:1', val: '1/1' }];
-        let printers = Array.from({ length: 14 }, (_, i) => ({
-            id: `printer_${i + 1}`,
-            name: `Printer ${String(i + 1).padStart(2, '0')}`,
-            ratioLabel: aspectRatios[i % aspectRatios.length].label,
-            ratioVal: aspectRatios[i % aspectRatios.length].val,
-            tempHotend: (Math.random() * (260 - 200) + 200).toFixed(1),
-            tempBed: (Math.random() * (100 - 50) + 50).toFixed(1)
-        }));
-
+        let printers = [];
         let activeTabId = 'dashboard';
-        let openTabs = printers.map(p => p.id);
+        let openTabs = [];
         const PAGE_SIZE = 9;
         let currentPage = 0;
-        const totalPages = Math.ceil(printers.length / PAGE_SIZE);
 
         async function initApp() {
+            printers = await window.electronAPI.getPrinters();
             renderTabs();
             renderDashboard();
+            renderFleetManagement();
             refreshSystemInfo();
             loadWifiNetworks();
+
+            // If blank install on initial boot, switch straight to settings or prompt user
+            if (printers.length === 0) {
+                showToast('Welcome to Moonitor-Kiosk! No printers configured.');
+            }
         }
 
         async function refreshSystemInfo() {
@@ -159,7 +191,97 @@
         async function runSubnetScan() {
             showToast('Scanning subnet for Moonraker API endpoints...');
             const discovered = await window.electronAPI.scanSubnet();
-            showToast(`Scan complete. Discovered ${discovered.length} active printers.`);
+            const container = document.getElementById('scan-results-container');
+            if (discovered.length === 0) {
+                container.innerHTML = `<p class="text-sm text-gray-400">No printers discovered on subnet.</p>`;
+                return;
+            }
+            container.innerHTML = `<p class="text-xs text-green-400 font-semibold mb-2">Discovered ${discovered.length} printer(s):</p>` + 
+                discovered.map(p => `
+                    <div class="flex items-center justify-between bg-gray-950 border border-gray-800 p-3 rounded-lg">
+                        <div>
+                            <span class="font-bold text-white">${p.name}</span>
+                            <span class="text-xs text-gray-400 ml-2 font-mono">${p.ip}</span>
+                        </div>
+                        <button onclick="importDiscoveredPrinter('${p.name}', '${p.ip}')" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-lg cursor-pointer">
+                            Add to Fleet
+                        </button>
+                    </div>
+                `).join('');
+            showToast(`Scan complete. Found ${discovered.length} printer(s).`);
+        }
+
+        async function importDiscoveredPrinter(name, ip) {
+            const newPrinter = {
+                id: `printer_${Date.now()}`,
+                name: name,
+                ip: ip,
+                ratioLabel: '16:9',
+                ratioVal: '16/9',
+                tempHotend: '210.0',
+                tempBed: '60.0'
+            };
+            printers.push(newPrinter);
+            await window.electronAPI.savePrinters(printers);
+            renderDashboard();
+            renderFleetManagement();
+            showToast(`Added ${name} successfully!`);
+        }
+
+        async function addPrinterManually() {
+            const name = document.getElementById('manual-name-input').value.trim();
+            const ip = document.getElementById('manual-ip-input').value.trim();
+            if (!name || !ip) {
+                showToast('Please enter both printer name and IP address.');
+                return;
+            }
+            const newPrinter = {
+                id: `printer_${Date.now()}`,
+                name: name,
+                ip: ip,
+                ratioLabel: '16:9',
+                ratioVal: '16/9',
+                tempHotend: '210.0',
+                tempBed: '60.0'
+            };
+            printers.push(newPrinter);
+            await window.electronAPI.savePrinters(printers);
+            document.getElementById('manual-name-input').value = '';
+            document.getElementById('manual-ip-input').value = '';
+            renderDashboard();
+            renderFleetManagement();
+            showToast(`Added ${name} manually.`);
+        }
+
+        async function removePrinter(printerId) {
+            printers = printers.filter(p => p.id !== printerId);
+            openTabs = openTabs.filter(id => id !== printerId);
+            if (activeTabId === printerId) switchTab('dashboard');
+            await window.electronAPI.savePrinters(printers);
+            renderDashboard();
+            renderFleetManagement();
+            renderTabs();
+            showToast('Printer removed from fleet.');
+        }
+
+        function renderFleetManagement() {
+            document.getElementById('fleet-count').textContent = printers.length;
+            const container = document.getElementById('configured-fleet-list');
+            if (printers.length === 0) {
+                container.innerHTML = `<p class="text-sm text-gray-500 italic">No printers configured yet.</p>`;
+                return;
+            }
+            container.innerHTML = printers.map(p => `
+                <div class="flex items-center justify-between bg-gray-950 border border-gray-800 p-3 rounded-lg">
+                    <div>
+                        <span class="font-bold text-white">${p.name}</span>
+                        <span class="text-xs text-blue-400 font-mono ml-3">${p.ip}</span>
+                    </div>
+                    <button onclick="removePrinter('${p.id}')" class="px-3 py-1.5 bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white text-xs font-bold rounded-lg transition-colors cursor-pointer border border-red-800">
+                        Remove
+                    </button>
+                </div>
+            `).join('');
         }
 
         function renderTabs() {
@@ -209,6 +331,7 @@
                 document.getElementById('view-webview').classList.remove('hidden');
                 document.getElementById('view-webview').classList.add('flex');
                 document.getElementById('webview-printer-name').textContent = printer.name;
+                document.getElementById('webview-printer-ip').textContent = printer.ip;
             }
         }
 
@@ -226,25 +349,46 @@
 
         function renderDashboard() {
             const grid = document.getElementById('printer-grid');
+            const totalPages = Math.max(1, Math.ceil(printers.length / PAGE_SIZE));
+            if (currentPage >= totalPages) currentPage = Math.max(0, totalPages - 1);
+
             const startIdx = currentPage * PAGE_SIZE;
             const pagePrinters = printers.slice(startIdx, startIdx + PAGE_SIZE);
+
+            if (printers.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full row-span-full flex flex-col items-center justify-center p-8 text-center bg-gray-900 border border-gray-800 rounded-2xl shadow-inner">
+                        <i class="ph-fill ph-printer-3d text-6xl text-gray-600 mb-4 animate-bounce"></i>
+                        <h2 class="text-2xl font-bold text-white mb-2">No Printers Configured</h2>
+                        <p class="text-gray-400 text-sm max-w-md mb-6">Your kiosk is currently in a blank state. Run the subnet scanner in Settings to discover printers automatically, or add them manually.</p>
+                        <button onclick="switchTab('settings')" class="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold text-sm transition-colors shadow-lg cursor-pointer flex items-center gap-2">
+                            <i class="ph-bold ph-gear"></i> Go to Settings & Scanner
+                        </button>
+                    </div>
+                `;
+                document.getElementById('pagination-dots').innerHTML = '';
+                document.getElementById('btn-prev').classList.add('hidden');
+                document.getElementById('btn-next').classList.add('hidden');
+                return;
+            }
 
             grid.innerHTML = pagePrinters.map(printer => `
                 <div class="relative w-full h-full bg-gray-900 rounded-lg shadow-md border border-gray-800 overflow-hidden group flex items-center justify-center">
                     <div class="absolute inset-0 w-full h-full bg-gray-900 flex items-center justify-center overflow-hidden">
                         <div class="h-full aspect-[${printer.ratioVal}] bg-black flex flex-col items-center justify-center text-gray-500 font-mono select-none shadow-inner border border-gray-800/60">
                             <i class="ph ph-camera text-3xl mb-1 text-gray-600"></i>
-                            <span class="text-[11px] uppercase tracking-widest text-gray-400">preview (${printer.ratioLabel})</span>
+                            <span class="text-[11px] uppercase tracking-widest text-gray-400">${printer.ip}</span>
                         </div>
                     </div>
                     
                     <div class="absolute top-2 left-2 z-10 bg-gray-900/95 backdrop-blur-sm px-2 py-1 rounded text-xs font-mono font-bold text-gray-200 border border-gray-700 shadow flex gap-2">
                         <span>${printer.name}</span>
-                        <span class="text-gray-500 border-l border-gray-600 pl-2">${printer.ratioLabel}</span>
+                        <span class="text-gray-500 border-l border-gray-600 pl-2">${printer.ip}</span>
                     </div>
 
                     <div class="absolute inset-0 bg-gray-950/90 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all duration-300 z-20 flex flex-col justify-center items-center p-2 text-center">
-                        <h3 class="text-white font-bold text-xl md:text-2xl mb-4 tracking-wider">${printer.name}</h3>
+                        <h3 class="text-white font-bold text-xl md:text-2xl mb-2 tracking-wider">${printer.name}</h3>
+                        <p class="text-xs text-blue-400 font-mono mb-4">${printer.ip}</p>
                         <div class="flex gap-6 md:gap-10 mb-4 md:mb-6">
                             <div class="flex flex-col items-center">
                                 <span class="text-[10px] md:text-xs text-orange-400 font-bold uppercase tracking-widest"><i class="ph-fill ph-fire"></i> Hotend</span>
@@ -284,8 +428,9 @@
         }
 
         function updatePaginationUI() {
-            document.getElementById('btn-prev').classList.toggle('hidden', currentPage === 0);
-            document.getElementById('btn-next').classList.toggle('hidden', currentPage === totalPages - 1);
+            const totalPages = Math.ceil(printers.length / PAGE_SIZE);
+            document.getElementById('btn-prev').classList.toggle('hidden', currentPage === 0 || totalPages <= 1);
+            document.getElementById('btn-next').classList.toggle('hidden', currentPage >= totalPages - 1 || totalPages <= 1);
             let dotsHTML = '';
             for (let i = 0; i < totalPages; i++) {
                 dotsHTML += `<div class="h-2 rounded-full transition-all duration-300 ${i === currentPage ? 'bg-blue-500 w-6' : 'bg-gray-700 w-2'}"></div>`;
@@ -293,8 +438,13 @@
             document.getElementById('pagination-dots').innerHTML = dotsHTML;
         }
 
-        function nextPage() { if (currentPage < totalPages - 1) { currentPage++; renderDashboard(); } }
-        function prevPage() { if (currentPage > 0) { currentPage--; renderDashboard(); } }
+        function nextPage() {
+            const totalPages = Math.ceil(printers.length / PAGE_SIZE);
+            if (currentPage < totalPages - 1) { currentPage++; renderDashboard(); }
+        }
+        function prevPage() {
+            if (currentPage > 0) { currentPage--; renderDashboard(); }
+        }
 
         window.onload = initApp;
     </script>
