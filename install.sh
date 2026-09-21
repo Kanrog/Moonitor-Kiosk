@@ -6,7 +6,6 @@ if [ "$EUID" -ne 0 ]; then
   exit 1
 fi
 
-# Determine the actual non-root user running sudo, default to root if not using sudo
 TARGET_USER="${SUDO_USER:-root}"
 if [ "$TARGET_USER" = "root" ]; then
     TARGET_HOME="/root"
@@ -60,8 +59,8 @@ apt install -y \
     libasound2 \
     libgtk-3-0t64
 
-echo "[+] Installing lightweight Kiosk X server packages..."
-apt install -y xserver-xorg x11-xserver-utils openbox xinit
+echo "[+] Installing raw X server packages (No window manager)..."
+apt install -y xserver-xorg x11-xserver-utils xinit
 
 echo "[+] Setting up installation directory at /opt/moonitor-kiosk..."
 INSTALL_DIR="/opt/moonitor-kiosk"
@@ -80,10 +79,10 @@ ExecStart=
 ExecStart=-/sbin/agetty --autologin $TARGET_USER --noclear %I \$TERM
 EOF
 
-echo "[+] Configuring X session auto-start for $TARGET_USER..."
+echo "[+] Configuring direct app launch for $TARGET_USER..."
 cat << 'EOF' > "$TARGET_HOME/.xinitrc"
-exec openbox-session &
-cd /opt/moonitor-kiosk && npm start
+cd /opt/moonitor-kiosk
+exec npm start
 EOF
 chown "$TARGET_USER:$TARGET_USER" "$TARGET_HOME/.xinitrc"
 chmod +x "$TARGET_HOME/.xinitrc"
@@ -100,4 +99,4 @@ chown "$TARGET_USER:$TARGET_USER" "$TARGET_HOME/.bash_profile"
 systemctl daemon-reload
 systemctl enable getty@tty1
 
-echo "[+] Moonitor-Kiosk complete kiosk installation finished successfully!"
+echo "[+] Moonitor-Kiosk pure kiosk installation finished successfully!"
