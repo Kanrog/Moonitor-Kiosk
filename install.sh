@@ -68,7 +68,7 @@ systemctl set-default multi-user.target
 echo "[+] Setting up installation directory at /opt/moonitor-kiosk..."
 INSTALL_DIR="/opt/moonitor-kiosk"
 mkdir -p "$INSTALL_DIR"
-rsync -av --exclude='.git' ./ "$INSTALL_DIR/"
+rsync -av ./ "$INSTALL_DIR/"
 
 echo "[+] Installing project NPM dependencies in $INSTALL_DIR..."
 cd "$INSTALL_DIR"

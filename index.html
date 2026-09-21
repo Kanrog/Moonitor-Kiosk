@@ -43,7 +43,7 @@
 
             <div id="printer-grid" class="flex-1 w-full h-full min-h-0 grid grid-cols-2 md:grid-cols-3 grid-rows-3 gap-2 md:gap-4 transition-opacity duration-300"></div>
 
-            <button id="btn-next" onclick="nextPage()" class="absolute right-0 top-1/2 -translate-y-1/2 z-30 bg-gray-800/90 hover:bg-gray-700 text-white p-3 md:p-4 rounded-l-xl shadow-2xl transition-all border border-r-0 border-gray-600 hidden backdrop-blur-sm cursor-pointer">
+            <button id="btn-next" onclick="nextPage()" class="absolute right-0 top-1/2 -translate-y-1/2 z-30 bg-gray-800/90 hover:bg-gray-700 text-white p-3 md:p-4 rounded-l-xl shadow-2xl transition-all border border-r-0 border-gray-600 backdrop-blur-sm cursor-pointer">
                 <i class="ph-bold ph-caret-right text-3xl"></i>
             </button>
 
@@ -63,114 +63,123 @@
         </div>
 
         <!-- Settings View -->
-        <div id="view-settings" class="hidden absolute inset-0 bg-gray-950 flex-col w-full h-full p-6 md:p-10 z-10 overflow-y-auto">
-            <div class="max-w-4xl mx-auto w-full space-y-6">
-                <div>
-                    <h2 class="text-2xl font-bold text-white flex items-center gap-3">
-                        <i class="ph-fill ph-gear text-blue-500"></i> Kiosk & Fleet Configuration
-                    </h2>
-                    <p class="text-gray-400 text-sm mt-1">Manage system network parameters, discover printers on your subnet, or configure devices manually.</p>
-                </div>
-
-                <div class="bg-gray-900 border border-gray-800 rounded-xl p-5 shadow-lg flex items-center justify-between">
+        <div id="view-settings" class="hidden absolute inset-0 bg-gray-950 flex-col w-full h-full p-3 md:p-4 z-10 overflow-hidden">
+            <div class="w-full h-full flex flex-col space-y-3">
+                <div class="flex-shrink-0 flex items-center justify-between">
                     <div>
-                        <span class="text-xs text-gray-400 uppercase tracking-wider font-semibold">Active Kiosk Address</span>
-                        <div id="system-ip-display" class="text-xl font-mono font-bold text-blue-400 mt-0.5">Fetching IP...</div>
+                        <h2 class="text-lg md:text-xl font-bold text-white flex items-center gap-2">
+                            <i class="ph-fill ph-gear text-blue-500"></i> Kiosk & Fleet Configuration
+                        </h2>
+                        <p class="text-gray-400 text-xs">Manage network parameters, discover printers, and control system power & updates.</p>
                     </div>
-                    <button onclick="refreshSystemInfo()" class="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-200 rounded-lg text-sm font-semibold transition-colors border border-gray-700 cursor-pointer">
-                        Refresh IP
-                    </button>
                 </div>
 
-                <!-- Subnet Scanner & Discovery -->
-                <div class="bg-gray-900 border border-gray-800 rounded-xl p-5 shadow-lg space-y-4">
-                    <h3 class="text-lg font-bold text-white flex items-center gap-2">
-                        <i class="ph-fill ph-radar text-blue-400"></i> Subnet Printer Discovery
-                    </h3>
-                    <p class="text-gray-300 text-sm">Scan your local network to automatically detect Klipper / Moonraker instances.</p>
+                <div class="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 overflow-y-auto hide-scrollbar pb-2">
                     
-                    <button id="scan-btn" onclick="runSubnetScan()" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold text-sm transition-colors shadow cursor-pointer flex items-center gap-2">
-                        <i class="ph-bold ph-magnifying-glass"></i> Run Subnet Scan
-                    </button>
-
-                    <!-- Scan Progress Box -->
-                    <div id="scan-progress-box" class="hidden space-y-2 bg-gray-950 border border-gray-800 p-4 rounded-lg">
-                        <div class="flex justify-between text-xs text-gray-300 font-mono">
-                            <span id="scan-status-text">Searching IP range...</span>
-                            <span id="scan-percentage">0%</span>
+                    <!-- Kiosk IP Info Card -->
+                    <div class="bg-gray-900 border border-gray-800 rounded-xl p-3.5 shadow-lg flex flex-col justify-between">
+                        <div>
+                            <span class="text-[10px] text-gray-400 uppercase tracking-wider font-semibold">Active Kiosk Address</span>
+                            <div id="system-ip-display" class="text-base font-mono font-bold text-blue-400 mt-0.5">Fetching IP...</div>
                         </div>
-                        <div class="w-full bg-gray-800 h-2 rounded-full overflow-hidden">
-                            <div id="scan-progress-bar" class="bg-blue-500 h-full w-0 transition-all duration-150"></div>
+                        <div class="mt-3">
+                            <button onclick="refreshSystemInfo()" class="w-full py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-200 rounded-lg text-xs font-semibold transition-colors border border-gray-700 cursor-pointer">
+                                Refresh IP
+                            </button>
                         </div>
                     </div>
 
-                    <div id="scan-results-container" class="space-y-2 mt-3"></div>
-                </div>
-
-                <!-- Manual Printer Addition -->
-                <div class="bg-gray-900 border border-gray-800 rounded-xl p-5 shadow-lg space-y-4">
-                    <h3 class="text-lg font-bold text-white flex items-center gap-2">
-                        <i class="ph-fill ph-plus-circle text-green-400"></i> Add Printer Manually
-                    </h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="space-y-1">
-                            <label class="text-xs text-gray-400 font-medium">Printer Name</label>
-                            <input id="manual-name-input" type="text" placeholder="e.g. Rook MK2" class="w-full bg-gray-950 border border-gray-800 rounded-lg px-3 py-2.5 text-sm text-gray-200 outline-none focus:border-blue-500">
+                    <!-- Subnet Printer Discovery Card -->
+                    <div class="bg-gray-900 border border-gray-800 rounded-xl p-3.5 shadow-lg flex flex-col justify-between">
+                        <div class="space-y-2">
+                            <h3 class="text-sm font-bold text-white flex items-center gap-1.5">
+                                <i class="ph-fill ph-radar text-blue-400"></i> Subnet Printer Discovery
+                            </h3>
+                            <button id="scan-btn" onclick="runSubnetScan()" class="w-full py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold text-xs transition-colors shadow cursor-pointer flex items-center justify-center gap-1.5">
+                                <i class="ph-bold ph-magnifying-glass"></i> Run Subnet Scan
+                            </button>
+                            <!-- Scan Progress Box -->
+                            <div id="scan-progress-box" class="hidden space-y-1 bg-gray-950 border border-gray-800 p-2.5 rounded-lg">
+                                <div class="flex justify-between text-[10px] text-gray-300 font-mono">
+                                    <span id="scan-status-text">Searching...</span>
+                                    <span id="scan-percentage">0%</span>
+                                </div>
+                                <div class="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden">
+                                    <div id="scan-progress-bar" class="bg-blue-500 h-full w-0 transition-all duration-150"></div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="space-y-1">
-                            <label class="text-xs text-gray-400 font-medium">IP Address or Hostname</label>
-                            <input id="manual-ip-input" type="text" placeholder="e.g. 192.168.0.150" class="w-full bg-gray-950 border border-gray-800 rounded-lg px-3 py-2.5 text-sm text-gray-200 outline-none focus:border-blue-500">
+                        <div id="scan-results-container" class="space-y-1.5 mt-2 max-h-32 overflow-y-auto hide-scrollbar"></div>
+                    </div>
+
+                    <!-- Add Printer Manually Card -->
+                    <div class="bg-gray-900 border border-gray-800 rounded-xl p-3.5 shadow-lg flex flex-col justify-between">
+                        <div class="space-y-2">
+                            <h3 class="text-sm font-bold text-white flex items-center gap-1.5">
+                                <i class="ph-fill ph-plus-circle text-green-400"></i> Add Printer Manually
+                            </h3>
+                            <div class="space-y-1.5">
+                                <input id="manual-name-input" type="text" placeholder="Printer Name (e.g. Rook MK2)" class="w-full bg-gray-950 border border-gray-800 rounded-lg px-2.5 py-1.5 text-xs text-gray-200 outline-none focus:border-blue-500">
+                                <input id="manual-ip-input" type="text" placeholder="IP Address (e.g. 192.168.0.150)" class="w-full bg-gray-950 border border-gray-800 rounded-lg px-2.5 py-1.5 text-xs text-gray-200 outline-none focus:border-blue-500">
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <button onclick="addPrinterManually()" class="w-full py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg font-bold text-xs transition-colors shadow cursor-pointer">
+                                Add to Fleet
+                            </button>
                         </div>
                     </div>
-                    <button onclick="addPrinterManually()" class="px-5 py-2.5 bg-green-600 hover:bg-green-500 text-white rounded-lg font-bold text-sm transition-colors shadow cursor-pointer">
-                        Add Printer to Fleet
-                    </button>
-                </div>
 
-                <!-- Configured Fleet Management -->
-                <div class="bg-gray-900 border border-gray-800 rounded-xl p-5 shadow-lg space-y-4">
-                    <h3 class="text-lg font-bold text-white flex items-center gap-2">
-                        <i class="ph-fill ph-printer-3d text-purple-400"></i> Configured Fleet (<span id="fleet-count">0</span>)
-                    </h3>
-                    <div id="configured-fleet-list" class="space-y-2"></div>
-                </div>
+                    <!-- Configured Fleet Management Card -->
+                    <div class="bg-gray-900 border border-gray-800 rounded-xl p-3.5 shadow-lg flex flex-col justify-between">
+                        <div>
+                            <h3 class="text-sm font-bold text-white flex items-center gap-1.5 mb-2">
+                                <i class="ph-fill ph-printer-3d text-purple-400"></i> Fleet (<span id="fleet-count">0</span>)
+                            </h3>
+                            <div id="configured-fleet-list" class="space-y-1.5 max-h-36 overflow-y-auto hide-scrollbar"></div>
+                        </div>
+                    </div>
 
-                <!-- System Power Controls -->
-                <div class="bg-gray-900 border border-gray-800 rounded-xl p-5 shadow-lg space-y-4">
-                    <h3 class="text-lg font-bold text-white flex items-center gap-2">
-                        <i class="ph-fill ph-power text-red-400"></i> System Power
-                    </h3>
-                    <p class="text-gray-300 text-sm">Control kiosk power state directly from the interface.</p>
-                    <div class="flex gap-4 pt-1">
-                        <button onclick="rebootSystem()" class="px-5 py-2.5 bg-yellow-600/20 hover:bg-yellow-600 text-yellow-400 hover:text-white rounded-lg font-bold text-sm transition-colors border border-yellow-800 cursor-pointer flex items-center gap-2">
-                            <i class="ph-bold ph-arrow-clockwise text-lg"></i> Reboot Kiosk
-                        </button>
-                        <button onclick="shutdownSystem()" class="px-5 py-2.5 bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white rounded-lg font-bold text-sm transition-colors border border-red-800 cursor-pointer flex items-center gap-2">
-                            <i class="ph-bold ph-power text-lg"></i> Shutdown Kiosk
-                        </button>
+                    <!-- System Power & Update Controls Card -->
+                    <div class="bg-gray-900 border border-gray-800 rounded-xl p-3.5 shadow-lg flex flex-col justify-between">
+                        <div class="space-y-2">
+                            <h3 class="text-sm font-bold text-white flex items-center gap-1.5">
+                                <i class="ph-fill ph-power text-red-400"></i> System Power & Updates
+                            </h3>
+                            <div class="flex flex-col gap-1.5 pt-1">
+                                <button onclick="updateSystem()" class="w-full py-1.5 bg-blue-600/20 hover:bg-blue-600 text-blue-400 hover:text-white rounded-lg font-bold text-xs transition-colors border border-blue-800 cursor-pointer flex items-center justify-center gap-1.5">
+                                    <i class="ph-bold ph-cloud-arrow-down"></i> Update Kiosk
+                                </button>
+                                <button onclick="rebootSystem()" class="w-full py-1.5 bg-yellow-600/20 hover:bg-yellow-600 text-yellow-400 hover:text-white rounded-lg font-bold text-xs transition-colors border border-yellow-800 cursor-pointer flex items-center justify-center gap-1.5">
+                                    <i class="ph-bold ph-arrow-clockwise"></i> Reboot Kiosk
+                                </button>
+                                <button onclick="shutdownSystem()" class="w-full py-1.5 bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white rounded-lg font-bold text-xs transition-colors border border-red-800 cursor-pointer flex items-center justify-center gap-1.5">
+                                    <i class="ph-bold ph-power"></i> Shutdown Kiosk
+                                </button>
+                            </div>
+                        </div>
                     </div>
-                </div>
 
-                <!-- Wi-Fi Configuration -->
-                <div class="bg-gray-900 border border-gray-800 rounded-xl p-5 shadow-lg space-y-4">
-                    <h3 class="text-lg font-bold text-white flex items-center gap-2">
-                        <i class="ph-fill ph-wifi text-green-400"></i> Wi-Fi Network Selection
-                    </h3>
-                    <div class="space-y-2">
-                        <label class="text-xs text-gray-400 font-medium">Available SSIDs</label>
-                        <select id="wifi-network-select" class="w-full bg-gray-950 border border-gray-800 rounded-lg px-3 py-2.5 text-sm text-gray-200 outline-none focus:border-blue-500">
-                            <option>Scanning networks...</option>
-                        </select>
+                    <!-- Wi-Fi Configuration Card -->
+                    <div class="bg-gray-900 border border-gray-800 rounded-xl p-3.5 shadow-lg flex flex-col justify-between">
+                        <div class="space-y-2">
+                            <h3 class="text-sm font-bold text-white flex items-center gap-1.5">
+                                <i class="ph-fill ph-wifi text-green-400"></i> Wi-Fi Settings
+                            </h3>
+                            <div class="space-y-1.5">
+                                <select id="wifi-network-select" class="w-full bg-gray-950 border border-gray-800 rounded-lg px-2.5 py-1.5 text-xs text-gray-200 outline-none focus:border-blue-500">
+                                    <option>Scanning networks...</option>
+                                </select>
+                                <input id="wifi-password-input" type="password" placeholder="Password" class="w-full bg-gray-950 border border-gray-800 rounded-lg px-2.5 py-1.5 text-xs text-gray-200 outline-none focus:border-blue-500">
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <button onclick="connectWifi()" class="w-full py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold text-xs transition-colors shadow cursor-pointer">
+                                Connect Network
+                            </button>
+                        </div>
                     </div>
-                    <div class="space-y-2">
-                        <label class="text-xs text-gray-400 font-medium">Network Password</label>
-                        <input id="wifi-password-input" type="password" placeholder="Enter Wi-Fi password" class="w-full bg-gray-950 border border-gray-800 rounded-lg px-3 py-2.5 text-sm text-gray-200 outline-none focus:border-blue-500">
-                    </div>
-                    <div class="pt-2">
-                        <button onclick="connectWifi()" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold text-sm transition-colors shadow cursor-pointer">
-                            Connect Network
-                        </button>
-                    </div>
+
                 </div>
             </div>
         </div>
@@ -187,17 +196,16 @@
 
         async function initApp() {
             printers = await window.electronAPI.getPrinters();
-            openTabs = printers.map(p => p.id); // Ensure all configured printers open as tabs automatically
+            openTabs = printers.map(p => p.id); 
             renderTabs();
             renderDashboard();
             renderFleetManagement();
             refreshSystemInfo();
             loadWifiNetworks();
 
-            // Listen for live scan progress updates from main process
             window.electronAPI.onScanProgress((data) => {
                 const percent = Math.round((data.current / data.total) * 100);
-                document.getElementById('scan-status-text').textContent = `Searching IP range ${data.subnet}.${data.current}/${data.total} (${data.ip})...`;
+                document.getElementById('scan-status-text').textContent = `Scanning ${data.subnet}.${data.current}/${data.total}...`;
                 document.getElementById('scan-percentage').textContent = `${percent}%`;
                 document.getElementById('scan-progress-bar').style.width = `${percent}%`;
             });
@@ -211,7 +219,7 @@
         async function loadWifiNetworks() {
             const networks = await window.electronAPI.getWifiList();
             const select = document.getElementById('wifi-network-select');
-            select.innerHTML = networks.map(n => `<option value="${n.ssid}">${n.ssid} (Signal: ${n.signal}%)</option>`).join('');
+            select.innerHTML = networks.map(n => `<option value="${n.ssid}">${n.ssid} (${n.signal}%)</option>`).join('');
         }
 
         async function connectWifi() {
@@ -221,15 +229,28 @@
             showToast(res.success ? `Connected to ${ssid}` : `Connection failed: ${res.error}`);
         }
 
+        async function updateSystem() {
+            if (confirm('Check and install latest updates from GitHub?')) {
+                showToast('Updating kiosk from GitHub repository...');
+                const res = await window.electronAPI.updateSystem();
+                if (res.success) {
+                    showToast('Update successful! Rebooting kiosk...');
+                    setTimeout(() => { window.electronAPI.rebootSystem(); }, 2000);
+                } else {
+                    showToast(`Update failed: ${res.error || 'Unknown error'}`);
+                }
+            }
+        }
+
         function rebootSystem() {
-            if (confirm('Are you sure you want to reboot the kiosk?')) {
+            if (confirm('Reboot kiosk?')) {
                 showToast('Rebooting system...');
                 window.electronAPI.rebootSystem();
             }
         }
 
         function shutdownSystem() {
-            if (confirm('Are you sure you want to shutdown the kiosk?')) {
+            if (confirm('Shutdown kiosk?')) {
                 showToast('Shutting down system...');
                 window.electronAPI.shutdownSystem();
             }
@@ -253,23 +274,22 @@
             scanBtn.classList.remove('opacity-50', 'cursor-not-allowed');
 
             if (discovered.length === 0) {
-                container.innerHTML = `<p class="text-sm text-gray-400">No printers discovered on subnet.</p>`;
+                container.innerHTML = `<p class="text-xs text-gray-400">No printers discovered.</p>`;
                 showToast('Scan complete. No printers found.');
                 return;
             }
-            container.innerHTML = `<p class="text-xs text-green-400 font-semibold mb-2">Discovered ${discovered.length} printer(s):</p>` + 
-                discovered.map(p => `
-                    <div class="flex items-center justify-between bg-gray-950 border border-gray-800 p-3 rounded-lg">
-                        <div>
-                            <span class="font-bold text-white">${p.name}</span>
-                            <span class="text-xs text-gray-400 ml-2 font-mono">${p.ip}</span>
-                        </div>
-                        <button onclick="importDiscoveredPrinter('${p.name.replace(/'/g, "\\'")}', '${p.ip}')" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-lg cursor-pointer">
-                            Add to Fleet
-                        </button>
+            container.innerHTML = discovered.map(p => `
+                <div class="flex items-center justify-between bg-gray-950 border border-gray-800 p-2 rounded-lg text-xs">
+                    <div>
+                        <span class="font-bold text-white">${p.name}</span>
+                        <span class="text-gray-400 ml-1.5 font-mono">${p.ip}</span>
                     </div>
-                `).join('');
-            showToast(`Scan complete. Discovered ${discovered.length} active printer(s).`);
+                    <button onclick="importDiscoveredPrinter('${p.name.replace(/'/g, "\\'")}', '${p.ip}')" class="px-2 py-1 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded cursor-pointer">
+                        Add
+                    </button>
+                </div>
+            `).join('');
+            showToast(`Scan complete. Found ${discovered.length} printer(s).`);
         }
 
         async function importDiscoveredPrinter(name, ip) {
@@ -288,14 +308,14 @@
             renderDashboard();
             renderFleetManagement();
             renderTabs();
-            showToast(`Added ${name} successfully!`);
+            showToast(`Added ${name}!`);
         }
 
         async function addPrinterManually() {
             const name = document.getElementById('manual-name-input').value.trim();
             const ip = document.getElementById('manual-ip-input').value.trim();
             if (!name || !ip) {
-                showToast('Please enter both printer name and IP address.');
+                showToast('Enter both name and IP address.');
                 return;
             }
             const newPrinter = {
@@ -315,7 +335,21 @@
             renderDashboard();
             renderFleetManagement();
             renderTabs();
-            showToast(`Added ${name} manually.`);
+            showToast(`Added ${name}!`);
+        }
+
+        async function renamePrinter(printerId) {
+            const printer = printers.find(p => p.id === printerId);
+            if (!printer) return;
+            const newName = prompt('Enter new printer name:', printer.name);
+            if (newName && newName.trim() !== '') {
+                printer.name = newName.trim();
+                await window.electronAPI.savePrinters(printers);
+                renderDashboard();
+                renderFleetManagement();
+                renderTabs();
+                showToast(`Renamed to ${printer.name}`);
+            }
         }
 
         async function removePrinter(printerId) {
@@ -326,25 +360,30 @@
             renderDashboard();
             renderFleetManagement();
             renderTabs();
-            showToast('Printer removed from fleet.');
+            showToast('Printer removed.');
         }
 
         function renderFleetManagement() {
             document.getElementById('fleet-count').textContent = printers.length;
             const container = document.getElementById('configured-fleet-list');
             if (printers.length === 0) {
-                container.innerHTML = `<p class="text-sm text-gray-500 italic">No printers configured yet.</p>`;
+                container.innerHTML = `<p class="text-xs text-gray-500 italic">No printers configured.</p>`;
                 return;
             }
             container.innerHTML = printers.map(p => `
-                <div class="flex items-center justify-between bg-gray-950 border border-gray-800 p-3 rounded-lg">
-                    <div>
+                <div class="flex items-center justify-between bg-gray-950 border border-gray-800 p-2 rounded-lg text-xs">
+                    <div class="truncate mr-2">
                         <span class="font-bold text-white">${p.name}</span>
-                        <span class="text-xs text-blue-400 font-mono ml-3">${p.ip}</span>
+                        <span class="text-blue-400 font-mono ml-2">${p.ip}</span>
                     </div>
-                    <button onclick="removePrinter('${p.id}')" class="px-3 py-1.5 bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white text-xs font-bold rounded-lg transition-colors cursor-pointer border border-red-800">
-                        Remove
-                    </button>
+                    <div class="flex items-center gap-1.5 flex-shrink-0">
+                        <button onclick="renamePrinter('${p.id}')" class="px-2 py-1 bg-gray-800 hover:bg-gray-700 text-gray-300 font-bold rounded cursor-pointer border border-gray-700">
+                            Rename
+                        </button>
+                        <button onclick="removePrinter('${p.id}')" class="px-2 py-1 bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white font-bold rounded transition-colors cursor-pointer border border-red-800">
+                            Del
+                        </button>
+                    </div>
                 </div>
             `).join('');
         }

@@ -8,6 +8,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   connectWifi: (data) => ipcRenderer.invoke('wifi-connect', data),
   getPrinters: () => ipcRenderer.invoke('get-printers'),
   savePrinters: (printers) => ipcRenderer.invoke('save-printers', printers),
+  updateSystem: () => ipcRenderer.invoke('system-update'),
   rebootSystem: () => ipcRenderer.invoke('system-reboot'),
   shutdownSystem: () => ipcRenderer.invoke('system-shutdown')
 });

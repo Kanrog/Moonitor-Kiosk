@@ -59,7 +59,19 @@ ipcMain.handle('save-printers', (event, printers) => {
   }
 });
 
-// System Power IPC Handlers
+// System Power & Update IPC Handlers
+ipcMain.handle('system-update', () => {
+  return new Promise((resolve) => {
+    exec('cd /opt/moonitor-kiosk && git pull && npm install', (err, stdout, stderr) => {
+      if (err) {
+        resolve({ success: false, error: stderr || err.message });
+      } else {
+        resolve({ success: true, output: stdout });
+      }
+    });
+  });
+});
+
 ipcMain.handle('system-reboot', () => {
   exec('sudo reboot', (err) => {
     if (err) console.error('Reboot failed:', err);
@@ -105,13 +117,13 @@ ipcMain.handle('scan-subnet', async () => {
 
     const discovered = [];
     const totalHosts = 254;
-    const batchSize = 4; // Smaller batch size to prevent network buffer saturation
+    const batchSize = 4;
     let completedHosts = 0;
 
     const checkHost = (ip) => {
       return new Promise((res) => {
         const socket = new net.Socket();
-        socket.setTimeout(800); // Generous timeout to catch slow responders
+        socket.setTimeout(800);
 
         socket.on('connect', () => {
           socket.destroy();
@@ -164,14 +176,13 @@ ipcMain.handle('scan-subnet', async () => {
       });
     };
 
-    // Scan in controlled small batches with a brief pause between batches
     for (let i = 1; i <= totalHosts; i += batchSize) {
       const batchPromises = [];
       for (let j = i; j < i + batchSize && j <= totalHosts; j++) {
         batchPromises.push(checkHost(`${subnetBase}.${j}`));
       }
       await Promise.all(batchPromises);
-      await new Promise(r => setTimeout(r, 60)); // Inter-batch delay for absolute reliability
+      await new Promise(r => setTimeout(r, 60));
     }
 
     resolve(discovered);
