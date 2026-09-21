@@ -73,10 +73,10 @@ ipcMain.handle('get-system-info', () => {
   return { ip: ipAddress, port: 3000 };
 });
 
-// Real Local Subnet Scanner for Moonraker Instances (Port 7125)
+// Batched Subnet Scanner for Moonraker Instances (Port 7125)
 ipcMain.handle('scan-subnet', async () => {
-  return new Promise((resolve) => {
-    let subnetBase = '192.168.1';
+  return new Promise(async (resolve) => {
+    let subnetBase = '192.168.0';
     const interfaces = os.networkInterfaces();
     
     // Dynamically detect local subnet base
@@ -92,33 +92,31 @@ ipcMain.handle('scan-subnet', async () => {
     }
 
     const discovered = [];
-    const promises = [];
     const totalHosts = 254;
+    const batchSize = 10; // Scan 10 IPs at a time to prevent socket exhaustion
 
     const checkHost = (ip) => {
       return new Promise((res) => {
         const socket = new net.Socket();
-        socket.setTimeout(350); // Fast timeout for responsiveness
+        socket.setTimeout(400);
 
         socket.on('connect', () => {
           socket.destroy();
-          // Verify Moonraker endpoint
-          http.get(`http://${ip}:7125/server/info`, { timeout: 500 }, (resp) => {
+          http.get(`http://${ip}:7125/server/info`, { timeout: 600 }, (resp) => {
             let data = '';
             resp.on('data', chunk => { data += chunk; });
             resp.on('end', () => {
-              let printerName = `Klipper Printer`;
+              let printerName = `Klipper (${ip})`;
               try {
                 const json = JSON.parse(data);
                 if (json && json.result) {
-                  printerName = `Klipper (${ip})` ;
+                  printerName = `Klipper Printer (${ip})`;
                 }
               } catch (e) {}
               discovered.push({ ip: ip, name: printerName });
               res();
             });
           }).on('error', () => {
-            // Port 7125 open, add as discovered instance
             discovered.push({ ip: ip, name: `Klipper (${ip})` });
             res();
           });
@@ -131,14 +129,16 @@ ipcMain.handle('scan-subnet', async () => {
       });
     };
 
-    // Scan all hosts in the local subnet concurrently
-    for (let i = 1; i <= totalHosts; i++) {
-      promises.push(checkHost(`${subnetBase}.${i}`));
+    // Execute scanning in controlled batches of 10
+    for (let i = 1; i <= totalHosts; i += batchSize) {
+      const batchPromises = [];
+      for (let j = i; j < i + batchSize && j <= totalHosts; j++) {
+        batchPromises.push(checkHost(`${subnetBase}.${j}`));
+      }
+      await Promise.all(batchPromises);
     }
 
-    Promise.all(promises).then(() => {
-      resolve(discovered);
-    });
+    resolve(discovered);
   });
 });
 
