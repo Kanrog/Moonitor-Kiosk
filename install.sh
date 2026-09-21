@@ -1,22 +1,27 @@
 #!/bin/bash
 set -e
 
+if [ "$EUID" -ne 0 ]; then
+  echo "[-] Please run as root: sudo bash install.sh"
+  exit 1
+fi
+
 echo "Updating system package lists..."
-sudo apt update && sudo apt upgrade -y
+apt update && apt upgrade -y
 
 echo "Installing core prerequisites..."
-sudo apt install -y curl git build-essential
+apt install -y curl git build-essential rsync
 
 echo "Installing Node.js LTS..."
 if ! command -v node &> /dev/null; then
     curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
-    sudo apt install -y nodejs
+    apt install -y nodejs
 else
     echo "Node.js is already installed ($(node -v))."
 fi
 
 echo "Installing Electron system runtime libraries & GTK3..."
-sudo apt install -y \
+apt install -y \
     libglib2.0-0t64 \
     libnss3 \
     libnspr4 \
@@ -47,16 +52,39 @@ sudo apt install -y \
     libasound2 \
     libgtk-3-0t64
 
-echo "Installing lightweight Kiosk X server packages (No full desktop)..."
-sudo apt install -y xserver-xorg x11-xserver-utils openbox xinit
+echo "Installing lightweight Kiosk X server packages..."
+apt install -y xserver-xorg x11-xserver-utils openbox xinit
 
-echo "Configuring xinitrc for direct app launch..."
-INSTALL_DIR="$(pwd)"
-echo "exec openbox-session &" > ~/.xinitrc
-echo "cd $INSTALL_DIR && npm start" >> ~/.xinitrc
-chmod +x ~/.xinitrc
+echo "Setting up installation directory at /opt/moonitor-kiosk..."
+INSTALL_DIR="/opt/moonitor-kiosk"
+mkdir -p "$INSTALL_DIR"
+rsync -av --exclude='.git' ./ "$INSTALL_DIR/"
 
-echo "Installing project NPM dependencies..."
+echo "Installing project NPM dependencies in $INSTALL_DIR..."
+cd "$INSTALL_DIR"
 npm install
 
-echo "Moonitor-Kiosk installation and kiosk configuration completed successfully!"
+echo "Creating systemd service..."
+cat << 'EOF' > /etc/systemd/system/moonitor-kiosk.service
+[Unit]
+Description=Moonitor Kiosk
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/moonitor-kiosk
+ExecStart=/usr/bin/npm start
+Restart=always
+Environment=DISPLAY=:0
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+echo "Enabling and starting systemd service..."
+systemctl daemon-reload
+systemctl enable moonitor-kiosk
+systemctl start moonitor-kiosk
+
+echo "Moonitor-Kiosk installation and systemd service deployment completed successfully!"
