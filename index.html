@@ -54,7 +54,7 @@
                 <i class="ph-bold ph-caret-left text-3xl"></i>
             </button>
 
-            <div id="printer-grid" class="flex-1 w-full h-full min-h-0 grid grid-cols-2 md:grid-cols-3 grid-rows-3 gap-2 md:gap-4 transition-opacity duration-300"></div>
+            <div id="printer-grid" class="flex-1 w-full h-full min-h-0 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 grid-rows-3 gap-2 md:gap-4 transition-opacity duration-300"></div>
 
             <button id="btn-next" onclick="nextPage()" class="absolute right-0 top-1/2 -translate-y-1/2 z-30 bg-gray-800/90 hover:bg-gray-700 text-white p-3 md:p-4 rounded-l-xl shadow-2xl transition-all border border-r-0 border-gray-600 backdrop-blur-sm cursor-pointer">
                 <i class="ph-bold ph-caret-right text-3xl"></i>
@@ -66,6 +66,11 @@
         <!-- Webview / Printer Interface View -->
         <div id="view-webview" class="hidden absolute inset-0 theme-bg flex-col items-center justify-center w-full h-full p-2 md:p-4 z-10">
             <div class="theme-card border rounded-2xl w-full h-full flex flex-col shadow-inner relative overflow-hidden">
+                <!-- Animated Loading Overlay -->
+                <div id="webview-loader" class="absolute inset-0 bg-black/80 backdrop-blur-sm z-30 hidden flex-col items-center justify-center gap-3">
+                    <i class="ph-bold ph-spinner text-4xl theme-accent-text animate-spin"></i>
+                    <span class="text-sm font-bold theme-text tracking-wide">Connecting to Printer Web UI...</span>
+                </div>
                 <webview id="printer-webview" class="w-full h-full bg-black" src="about:blank"></webview>
             </div>
         </div>
@@ -262,6 +267,18 @@
             renderFleetManagement();
             refreshSystemInfo();
             loadWifiNetworks();
+
+            // Webview loading indicators setup
+            const webview = document.getElementById('printer-webview');
+            const loader = document.getElementById('webview-loader');
+            webview.addEventListener('did-start-loading', () => {
+                loader.classList.remove('hidden');
+                loader.classList.add('flex');
+            });
+            webview.addEventListener('did-stop-loading', () => {
+                loader.classList.add('hidden');
+                loader.classList.remove('flex');
+            });
 
             window.electronAPI.onScanProgress((data) => {
                 const percent = Math.round((data.current / data.total) * 100);
@@ -643,9 +660,9 @@
             }
 
             grid.innerHTML = pagePrinters.map(printer => `
-                <div class="relative w-full h-full theme-card rounded-lg shadow-md border theme-border overflow-hidden group flex items-center justify-center">
+                <div class="relative w-full h-full theme-card rounded-lg shadow-md border theme-border overflow-hidden group flex items-center justify-center min-h-[160px]">
                     <div class="absolute inset-0 w-full h-full theme-card flex items-center justify-center overflow-hidden">
-                        <div class="h-full aspect-[${printer.ratioVal}] bg-black flex flex-col items-center justify-center text-gray-500 font-mono select-none shadow-inner border theme-border">
+                        <div class="h-full w-full bg-black flex flex-col items-center justify-center text-gray-500 font-mono select-none shadow-inner border theme-border">
                             <i class="ph ph-camera text-3xl mb-1 text-gray-600"></i>
                             <span class="text-[11px] uppercase tracking-widest text-gray-400">${printer.ip}</span>
                         </div>
