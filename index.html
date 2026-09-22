@@ -66,7 +66,6 @@
         <!-- Webview / Printer Interface View -->
         <div id="view-webview" class="hidden absolute inset-0 theme-bg flex-col items-center justify-center w-full h-full p-2 md:p-4 z-10">
             <div class="theme-card border rounded-2xl w-full h-full flex flex-col shadow-inner relative overflow-hidden">
-                <!-- Animated Loading Overlay -->
                 <div id="webview-loader" class="absolute inset-0 bg-black/80 backdrop-blur-sm z-30 hidden flex-col items-center justify-center gap-3">
                     <i class="ph-bold ph-spinner text-4xl theme-accent-text animate-spin"></i>
                     <span class="text-sm font-bold theme-text tracking-wide">Connecting to Printer Web UI...</span>
@@ -322,6 +321,53 @@
         let activeInputTarget = null;
         let keyboardShiftActive = false;
 
+        const api = {
+            getPrinters: async () => {
+                if (window.electronAPI && window.electronAPI.getPrinters) return await window.electronAPI.getPrinters();
+                const res = await fetch('/api/printers');
+                return await res.json();
+            },
+            savePrinters: async (printers) => {
+                if (window.electronAPI && window.electronAPI.savePrinters) return await window.electronAPI.savePrinters(printers);
+                const res = await fetch('/api/printers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(printers) });
+                const json = await res.json();
+                return json.success;
+            },
+            getSystemInfo: async () => {
+                if (window.electronAPI && window.electronAPI.getSystemInfo) return await window.electronAPI.getSystemInfo();
+                const res = await fetch('/api/system-info');
+                return await res.json();
+            },
+            scanSubnet: async () => {
+                if (window.electronAPI && window.electronAPI.scanSubnet) return await window.electronAPI.scanSubnet();
+                const res = await fetch('/api/scan-subnet');
+                return await res.json();
+            },
+            getWifiList: async () => {
+                if (window.electronAPI && window.electronAPI.getWifiList) return await window.electronAPI.getWifiList();
+                const res = await fetch('/api/wifi-list');
+                return await res.json();
+            },
+            connectWifi: async (data) => {
+                if (window.electronAPI && window.electronAPI.connectWifi) return await window.electronAPI.connectWifi(data);
+                const res = await fetch('/api/wifi-connect', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+                return await res.json();
+            },
+            updateSystem: async () => {
+                if (window.electronAPI && window.electronAPI.updateSystem) return await window.electronAPI.updateSystem();
+                const res = await fetch('/api/system-update', { method: 'POST' });
+                return await res.json();
+            },
+            rebootSystem: async () => {
+                if (window.electronAPI && window.electronAPI.rebootSystem) return window.electronAPI.rebootSystem();
+                await fetch('/api/system-reboot', { method: 'POST' });
+            },
+            shutdownSystem: async () => {
+                if (window.electronAPI && window.electronAPI.shutdownSystem) return window.electronAPI.shutdownSystem();
+                await fetch('/api/system-shutdown', { method: 'POST' });
+            }
+        };
+
         const presets = {
             midnight: { bg: '#030712', card: '#111827', text: '#e5e7eb', accent: '#3b82f6', border: '#1f2937' },
             cyberpunk: { bg: '#09090b', card: '#18181b', text: '#f4f4f5', accent: '#ec4899', border: '#27272a' },
@@ -332,7 +378,7 @@
         async function initApp() {
             loadSavedTheme();
             loadTouchKeyboardSetting();
-            printers = await window.electronAPI.getPrinters();
+            printers = await api.getPrinters();
             openTabs = printers.map(p => p.id); 
             renderTabs();
             renderDashboard();
@@ -340,19 +386,39 @@
             refreshSystemInfo();
             loadWifiNetworks();
 
-            // Webview loading indicators setup
             const webview = document.getElementById('printer-webview');
             const loader = document.getElementById('webview-loader');
-            webview.addEventListener('did-start-loading', () => {
-                loader.classList.remove('hidden');
-                loader.classList.add('flex');
-            });
-            webview.addEventListener('did-stop-loading', () => {
-                loader.classList.add('hidden');
-                loader.classList.remove('flex');
+            if (webview) {
+                webview.addEventListener('did-start-loading', () => {
+                    loader.classList.remove('hidden');
+                    loader.classList.add('flex');
+                });
+                webview.addEventListener('did-stop-loading', () => {
+                    loader.classList.add('hidden');
+                    loader.classList.remove('flex');
+                });
+
+                // Inject focus listener into webview to trigger virtual keyboard inside Mainsail/Fluidd
+                webview.addEventListener('dom-ready', () => {
+                    if (touchKeyboardEnabled) {
+                        webview.executeJavaScript(`
+                            window.addEventListener('focusin', (e) => {
+                                if (['INPUT', 'TEXTAREA'].includes(e.target.tagName) && e.target.type !== 'checkbox' && !e.target.readOnly) {
+                                    window.parent.postMessage({ type: 'SHOW_VIRTUAL_KEYBOARD' }, '*');
+                                }
+                            });
+                        `);
+                    }
+                });
+            }
+
+            // Listen for webview keyboard trigger messages
+            window.addEventListener('message', (e) => {
+                if (e.data && e.data.type === 'SHOW_VIRTUAL_KEYBOARD' && touchKeyboardEnabled) {
+                    showVirtualKeyboard();
+                }
             });
 
-            // Virtual keyboard focus listeners
             document.addEventListener('focusin', (e) => {
                 if (touchKeyboardEnabled && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) {
                     if (e.target.type !== 'color' && e.target.type !== 'checkbox' && !e.target.readOnly) {
@@ -360,13 +426,6 @@
                         showVirtualKeyboard();
                     }
                 }
-            });
-
-            window.electronAPI.onScanProgress((data) => {
-                const percent = Math.round((data.current / data.total) * 100);
-                document.getElementById('scan-status-text').textContent = `Scanning ${data.subnet}.${data.current}/${data.total}...`;
-                document.getElementById('scan-percentage').textContent = `${percent}%`;
-                document.getElementById('scan-progress-bar').style.width = `${percent}%`;
             });
         }
 
@@ -381,6 +440,7 @@
             localStorage.setItem('moonitor_touch_keyboard', touchKeyboardEnabled);
             showToast(touchKeyboardEnabled ? 'Touchscreen keyboard enabled' : 'Touchscreen keyboard disabled');
             if (!touchKeyboardEnabled) hideVirtualKeyboard();
+            else location.reload(); // Reload to apply webview injection bindings
         }
 
         function showVirtualKeyboard() {
@@ -405,6 +465,42 @@
         }
 
         function sendKey(key) {
+            const webview = document.getElementById('printer-webview');
+            const isWebviewActive = activeTabId !== 'dashboard' && activeTabId !== 'settings' && webview;
+
+            if (isWebviewActive) {
+                // Send simulated keystrokes into the webview iframe
+                webview.executeJavaScript(`
+                    (function() {
+                        const el = document.activeElement;
+                        if (!el || !['INPUT', 'TEXTAREA'].includes(el.tagName)) return;
+                        let val = el.value || '';
+                        const start = el.selectionStart || val.length;
+                        const end = el.selectionEnd || val.length;
+                        let char = '${key === 'backspace' ? 'BACKSPACE' : key === 'enter' ? 'ENTER' : key}';
+                        
+                        if (char === 'BACKSPACE') {
+                            if (start > 0 && start === end) {
+                                el.value = val.substring(0, start - 1) + val.substring(end);
+                                el.setSelectionRange(start - 1, start - 1);
+                            } else if (start !== end) {
+                                el.value = val.substring(0, start) + val.substring(end);
+                                el.setSelectionRange(start, start);
+                            }
+                        } else if (char === 'ENTER') {
+                            el.blur();
+                        } else {
+                            let sendChar = '${keyboardShiftActive}' === 'true' && char.length === 1 ? char.toUpperCase() : char;
+                            el.value = val.substring(0, start) + sendChar + val.substring(end);
+                            el.setSelectionRange(start + 1, start + 1);
+                        }
+                        el.dispatchEvent(new Event('input', { bubbles: true }));
+                        el.dispatchEvent(new Event('change', { bubbles: true }));
+                    })();
+                `);
+                return;
+            }
+
             if (!activeInputTarget) return;
             let val = activeInputTarget.value || '';
             const start = activeInputTarget.selectionStart || val.length;
@@ -433,9 +529,8 @@
                 activeInputTarget.value = val;
                 activeInputTarget.setSelectionRange(start + 1, start + 1);
             }
-            
-            // Trigger input event for frameworks/listeners
             activeInputTarget.dispatchEvent(new Event('input', { bubbles: true }));
+            activeInputTarget.dispatchEvent(new Event('change', { bubbles: true }));
         }
 
         function applyThemeColors(t) {
@@ -487,12 +582,12 @@
         }
 
         async function refreshSystemInfo() {
-            const info = await window.electronAPI.getSystemInfo();
+            const info = await api.getSystemInfo();
             document.getElementById('system-ip-display').innerText = `http://${info.ip}:${info.port}`;
         }
 
         async function loadWifiNetworks() {
-            const networks = await window.electronAPI.getWifiList();
+            const networks = await api.getWifiList();
             const container = document.getElementById('wifi-networks-container');
             if (!networks || networks.length === 0) {
                 container.innerHTML = `<div class="text-xs text-gray-500 text-center py-2">No Wi-Fi networks found.</div>`;
@@ -527,7 +622,7 @@
                 return;
             }
             const password = document.getElementById('wifi-password-input').value;
-            const res = await window.electronAPI.connectWifi({ ssid: selectedWifiSsid, password });
+            const res = await api.connectWifi({ ssid: selectedWifiSsid, password });
             showToast(res.success ? `Connected to ${selectedWifiSsid}` : `Connection failed: ${res.error}`);
             loadWifiNetworks();
         }
@@ -535,10 +630,10 @@
         async function updateSystem() {
             if (confirm('Check and install latest updates from GitHub?')) {
                 showToast('Updating kiosk from GitHub repository...');
-                const res = await window.electronAPI.updateSystem();
+                const res = await api.updateSystem();
                 if (res.success) {
                     showToast('Update successful! Rebooting kiosk...');
-                    setTimeout(() => { window.electronAPI.rebootSystem(); }, 2000);
+                    setTimeout(() => { api.rebootSystem(); }, 2000);
                 } else {
                     showToast(`Update failed: ${res.error || 'Unknown error'}`);
                 }
@@ -548,14 +643,14 @@
         function rebootSystem() {
             if (confirm('Reboot kiosk?')) {
                 showToast('Rebooting system...');
-                window.electronAPI.rebootSystem();
+                api.rebootSystem();
             }
         }
 
         function shutdownSystem() {
             if (confirm('Shutdown kiosk?')) {
                 showToast('Shutting down system...');
-                window.electronAPI.shutdownSystem();
+                api.shutdownSystem();
             }
         }
 
@@ -570,7 +665,7 @@
             container.innerHTML = '';
             showToast('Scanning subnet for Klipper instances...');
 
-            const discovered = await window.electronAPI.scanSubnet();
+            const discovered = await api.scanSubnet();
 
             progressBox.classList.add('hidden');
             scanBtn.disabled = false;
@@ -607,7 +702,7 @@
             };
             printers.push(newPrinter);
             if (!openTabs.includes(newPrinter.id)) openTabs.push(newPrinter.id);
-            await window.electronAPI.savePrinters(printers);
+            await api.savePrinters(printers);
             renderDashboard();
             renderFleetManagement();
             renderTabs();
@@ -632,7 +727,7 @@
             };
             printers.push(newPrinter);
             if (!openTabs.includes(newPrinter.id)) openTabs.push(newPrinter.id);
-            await window.electronAPI.savePrinters(printers);
+            await api.savePrinters(printers);
             document.getElementById('manual-name-input').value = '';
             document.getElementById('manual-ip-input').value = '';
             renderDashboard();
@@ -657,7 +752,7 @@
                 const printer = printers.find(p => p.id === printerId);
                 if (printer) {
                     printer.name = input.value.trim();
-                    await window.electronAPI.savePrinters(printers);
+                    await api.savePrinters(printers);
                     renderDashboard();
                     renderFleetManagement();
                     renderTabs();
@@ -672,7 +767,7 @@
             printers = printers.filter(p => p.id !== printerId);
             openTabs = openTabs.filter(id => id !== printerId);
             if (activeTabId === printerId) switchTab('dashboard');
-            await window.electronAPI.savePrinters(printers);
+            await api.savePrinters(printers);
             renderDashboard();
             renderFleetManagement();
             renderTabs();
@@ -718,9 +813,6 @@
         }
 
         function renderTabs() {
-            const activeStyle = "px-3 py-1.5 h-full flex items-center gap-2 rounded-t-lg transition-all border-b-4 theme-card theme-accent-text border-blue-500 shadow-md";
-            const inactiveStyle = "px-3 py-1.5 h-full flex items-center gap-2 rounded-t-lg transition-all border-b-4 bg-transparent border-transparent hover:bg-black/20 group";
-
             document.getElementById('tab-dashboard').className = `min-w-[130px] px-4 py-2 h-full flex items-center justify-center gap-2 rounded-t-lg transition-all font-bold text-sm border-b-4 ${activeTabId === 'dashboard' ? 'theme-card theme-accent-text border-blue-500 shadow-md' : 'bg-transparent text-gray-500 border-transparent hover:bg-black/20 hover:text-gray-300'}`;
             document.getElementById('tab-settings').className = `min-w-[100px] ml-auto px-4 py-2 h-full flex items-center justify-center gap-2 rounded-t-lg transition-all font-bold text-sm border-b-4 ${activeTabId === 'settings' ? 'theme-card theme-accent-text border-blue-500 shadow-md' : 'bg-transparent text-gray-500 border-transparent hover:bg-black/20 hover:text-gray-300'}`;
 
@@ -767,7 +859,7 @@
                 
                 const webview = document.getElementById('printer-webview');
                 const targetUrl = `http://${printer.ip}`;
-                if (webview.src !== targetUrl) {
+                if (webview && webview.src !== targetUrl) {
                     webview.src = targetUrl;
                 }
             }
@@ -839,7 +931,6 @@
                             </div>
                         </div>
 
-                        <!-- 2x2 Action Controls with Text Labels & ESTOP -->
                         <div class="grid grid-cols-2 gap-1.5 w-full max-w-[200px] mb-3">
                             <button class="px-2 py-1.5 bg-green-600 hover:bg-green-500 text-white rounded font-bold text-xs flex items-center justify-center gap-1 cursor-pointer shadow" onclick="triggerAction(event, '${printer.name}', 'Start')"><i class="ph-fill ph-play"></i> Start</button>
                             <button class="px-2 py-1.5 bg-yellow-600 hover:bg-yellow-500 text-white rounded font-bold text-xs flex items-center justify-center gap-1 cursor-pointer shadow" onclick="triggerAction(event, '${printer.name}', 'Pause')"><i class="ph-fill ph-pause"></i> Pause</button>

@@ -8,6 +8,145 @@ const { exec } = require('child_process');
 
 let mainWindow;
 const configPath = path.join(app.getPath('userData'), 'printers.json');
+const PORT = 3000;
+
+// HTTP Server for Dual-Mode (Local Kiosk + Network Browser Access)
+const server = http.createServer((req, res) => {
+  const url = new URL(req.url, `http://${req.headers.host}`);
+  
+  // Enable CORS for local network testing
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    res.writeHead(204);
+    res.end();
+    return;
+  }
+
+  // API Routes
+  if (url.pathname === '/api/printers') {
+    if (req.method === 'GET') {
+      try {
+        const printers = fs.existsSync(configPath) ? JSON.parse(fs.readFileSync(configPath, 'utf8')) : [];
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(printers));
+      } catch (e) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    } else if (req.method === 'POST') {
+      let body = '';
+      req.on('data', chunk => { body += chunk; });
+      req.on('end', () => {
+        try {
+          fs.writeFileSync(configPath, body);
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: true }));
+        } catch (e) {
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: e.message }));
+        }
+      });
+    }
+  } else if (url.pathname === '/api/system-info') {
+    let ipAddress = '127.0.0.1';
+    const interfaces = os.networkInterfaces();
+    for (const name of Object.keys(interfaces)) {
+      for (const netInfo of interfaces[name]) {
+        if (netInfo.family === 'IPv4' && !netInfo.internal) {
+          ipAddress = netInfo.address;
+        }
+      }
+    }
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ ip: ipAddress, port: PORT }));
+  } else if (url.pathname === '/api/wifi-list') {
+    exec('nmcli -t -f SSID,SIGNAL,ACTIVE device wifi', (err, stdout) => {
+      if (err) {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify([
+          { ssid: 'MakerSpace_IoT', signal: '90', active: true },
+          { ssid: 'Workshop_5G', signal: '75', active: false },
+          { ssid: 'Guest_Network', signal: '50', active: false }
+        ]));
+        return;
+      }
+      const networks = stdout.split('\n').filter(Boolean).map(line => {
+        const parts = line.split(':');
+        return { ssid: parts[0], signal: parts[1], active: parts[2] === 'yes' || parts[2] === 'Active' };
+      });
+      networks.sort((a, b) => (b.active ? 1 : 0) - (a.active ? 1 : 0));
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(networks));
+    });
+  } else if (url.pathname === '/api/wifi-connect' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', () => {
+      try {
+        const { ssid, password } = JSON.parse(body);
+        exec(`nmcli device wifi connect "${ssid}" password "${password}"`, (err, stdout) => {
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          if (err) {
+            res.end(JSON.stringify({ success: false, error: err.message }));
+          } else {
+            res.end(JSON.stringify({ success: true, output: stdout }));
+          }
+        });
+      } catch (e) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Invalid request' }));
+      }
+    });
+  } else if (url.pathname === '/api/system-update' && req.method === 'POST') {
+    exec('cd /opt/moonitor-kiosk && git pull && npm install', (err, stdout, stderr) => {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      if (err) {
+        res.end(JSON.stringify({ success: false, error: stderr || err.message }));
+      } else {
+        res.end(JSON.stringify({ success: true, output: stdout }));
+      }
+    });
+  } else if (url.pathname === '/api/system-reboot' && req.method === 'POST') {
+    exec('sudo systemctl reboot', (err) => {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: !err }));
+    });
+  } else if (url.pathname === '/api/system-shutdown' && req.method === 'POST') {
+    exec('sudo systemctl poweroff', (err) => {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: !err }));
+    });
+  } else if (url.pathname === '/api/scan-subnet') {
+    // Subnet scan endpoint returning JSON result
+    runSubnetScanAsync().then(discovered => {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(discovered));
+    });
+  } else {
+    // Serve static files (index.html)
+    let filePath = path.join(__dirname, url.pathname === '/' ? 'index.html' : url.pathname);
+    fs.readFile(filePath, (err, data) => {
+      if (err) {
+        res.writeHead(404);
+        res.end('Not found');
+      } else {
+        const ext = path.extname(filePath);
+        let contentType = 'text/html';
+        if (ext === '.js') contentType = 'text/javascript';
+        if (ext === '.css') contentType = 'text/css';
+        res.writeHead(200, { 'Content-Type': contentType });
+        res.end(data);
+      }
+    });
+  }
+});
+
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`Moonitor server running on http://0.0.0.0:${PORT}`);
+});
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -23,7 +162,8 @@ function createWindow() {
     }
   });
 
-  mainWindow.loadFile('index.html');
+  // Load via local HTTP server so Electron and external browsers share identical code paths
+  mainWindow.loadURL(`http://localhost:${PORT}`);
 }
 
 app.whenReady().then(() => {
@@ -38,7 +178,7 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
 });
 
-// IPC Handlers for Printer Persistence & Fleet Management
+// Existing IPC Handlers (retained for compatibility)
 ipcMain.handle('get-printers', () => {
   try {
     if (fs.existsSync(configPath)) {
@@ -60,7 +200,6 @@ ipcMain.handle('save-printers', (event, printers) => {
   }
 });
 
-// System Power & Update IPC Handlers
 ipcMain.handle('system-update', () => {
   return new Promise((resolve) => {
     exec('cd /opt/moonitor-kiosk && git pull && npm install', (err, stdout, stderr) => {
@@ -85,7 +224,6 @@ ipcMain.handle('system-shutdown', () => {
   });
 });
 
-// IPC Handlers for System & Network Operations
 ipcMain.handle('get-system-info', () => {
   let ipAddress = '127.0.0.1';
   const interfaces = os.networkInterfaces();
@@ -96,11 +234,10 @@ ipcMain.handle('get-system-info', () => {
       }
     }
   }
-  return { ip: ipAddress, port: 3000 };
+  return { ip: ipAddress, port: PORT };
 });
 
-// Highly reliable, slowed-down subnet scanner for Klipper instances (Port 7125)
-ipcMain.handle('scan-subnet', async () => {
+async function runSubnetScanAsync() {
   return new Promise(async (resolve) => {
     let subnetBase = '192.168.0';
     const interfaces = os.networkInterfaces();
@@ -159,17 +296,11 @@ ipcMain.handle('scan-subnet', async () => {
         socket.on('timeout', () => { 
           socket.destroy(); 
           completedHosts++;
-          if (mainWindow) {
-            mainWindow.webContents.send('scan-progress', { ip, current: completedHosts, total: totalHosts, subnet: subnetBase });
-          }
           res(); 
         });
         socket.on('error', () => { 
           socket.destroy(); 
           completedHosts++;
-          if (mainWindow) {
-            mainWindow.webContents.send('scan-progress', { ip, current: completedHosts, total: totalHosts, subnet: subnetBase });
-          }
           res(); 
         });
 
@@ -188,6 +319,10 @@ ipcMain.handle('scan-subnet', async () => {
 
     resolve(discovered);
   });
+}
+
+ipcMain.handle('scan-subnet', async () => {
+  return await runSubnetScanAsync();
 });
 
 ipcMain.handle('wifi-list', async () => {
@@ -203,12 +338,8 @@ ipcMain.handle('wifi-list', async () => {
       }
       const networks = stdout.split('\n').filter(Boolean).map(line => {
         const parts = line.split(':');
-        const ssid = parts[0];
-        const signal = parts[1];
-        const active = parts[2] === 'yes' || parts[2] === 'Active';
-        return { ssid, signal, active };
+        return { ssid: parts[0], signal: parts[1], active: parts[2] === 'yes' || parts[2] === 'Active' };
       });
-      // Sort active network to the top
       networks.sort((a, b) => (b.active ? 1 : 0) - (a.active ? 1 : 0));
       resolve(networks);
     });
