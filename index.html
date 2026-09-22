@@ -7,9 +7,22 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <style>
+        :root {
+            --theme-bg: #030712;
+            --theme-card: #111827;
+            --theme-text: #e5e7eb;
+            --theme-accent: #3b82f6;
+            --theme-border: #1f2937;
+        }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        body { user-select: none; overscroll-behavior: none; }
+        body { user-select: none; overscroll-behavior: none; background-color: var(--theme-bg); color: var(--theme-text); }
+        .theme-bg { background-color: var(--theme-bg); }
+        .theme-card { background-color: var(--theme-card); border-color: var(--theme-border); }
+        .theme-text { color: var(--theme-text); }
+        .theme-accent { background-color: var(--theme-accent); }
+        .theme-accent-text { color: var(--theme-accent); }
+        .theme-border { border-color: var(--theme-border); }
         @keyframes slideUpFade {
             from { opacity: 0; transform: translate(-50%, 20px); }
             to { opacity: 1; transform: translate(-50%, 0); }
@@ -17,7 +30,7 @@
         .toast-animate { animation: slideUpFade 0.3s ease-out forwards; }
     </style>
 </head>
-<body class="bg-gray-950 text-gray-200 h-screen w-screen overflow-hidden flex flex-col font-sans">
+<body class="h-screen w-screen overflow-hidden flex flex-col font-sans">
 
     <!-- Persistent Tab Bar -->
     <nav class="bg-gray-900 shadow-md z-20 flex-shrink-0 border-b border-gray-800 h-14 flex items-end px-2 pt-2">
@@ -34,7 +47,7 @@
         </button>
     </nav>
 
-    <main class="flex-1 min-h-0 relative w-full h-full bg-gray-950 flex flex-col">
+    <main class="flex-1 min-h-0 relative w-full h-full theme-bg flex flex-col">
         <!-- Dashboard View -->
         <div id="view-dashboard" class="flex-1 flex flex-col w-full h-full relative p-2 md:p-4">
             <button id="btn-prev" onclick="prevPage()" class="absolute left-0 top-1/2 -translate-y-1/2 z-30 bg-gray-800/90 hover:bg-gray-700 text-white p-3 md:p-4 rounded-r-xl shadow-2xl transition-all border border-l-0 border-gray-600 hidden backdrop-blur-sm cursor-pointer">
@@ -51,24 +64,24 @@
         </div>
 
         <!-- Webview / Printer Interface View -->
-        <div id="view-webview" class="hidden absolute inset-0 bg-gray-950 flex-col items-center justify-center w-full h-full p-4 md:p-8 z-10">
-            <div class="bg-gray-900 border border-gray-800 rounded-2xl w-full h-full flex flex-col items-center justify-center shadow-inner relative overflow-hidden">
+        <div id="view-webview" class="hidden absolute inset-0 theme-bg flex-col items-center justify-center w-full h-full p-4 md:p-8 z-10">
+            <div class="theme-card border rounded-2xl w-full h-full flex flex-col items-center justify-center shadow-inner relative overflow-hidden">
                 <i class="ph ph-browser text-7xl text-gray-700 mb-4"></i>
-                <h2 class="text-3xl md:text-4xl font-bold text-gray-100 mb-2 text-center">Mainsail / Fluidd Web Interface</h2>
-                <div class="mt-4 px-6 py-2 bg-gray-950 rounded-full border border-gray-800 flex items-center gap-3">
+                <h2 class="text-3xl md:text-4xl font-bold theme-text mb-2 text-center">Mainsail / Fluidd Web Interface</h2>
+                <div class="mt-4 px-6 py-2 theme-bg rounded-full border theme-border flex items-center gap-3">
                     <span class="w-3 h-3 rounded-full bg-green-500 animate-pulse"></span>
-                    <span class="text-xl text-gray-300">Connected to: <span id="webview-printer-name" class="font-bold text-white">Printer Name</span> (<span id="webview-printer-ip" class="font-mono text-blue-400">IP</span>)</span>
+                    <span class="text-xl theme-text">Connected to: <span id="webview-printer-name" class="font-bold">Printer Name</span> (<span id="webview-printer-ip" class="font-mono theme-accent-text">IP</span>)</span>
                 </div>
             </div>
         </div>
 
         <!-- Settings View -->
-        <div id="view-settings" class="hidden absolute inset-0 bg-gray-950 flex-col w-full h-full p-3 md:p-4 z-10 overflow-y-auto hide-scrollbar">
+        <div id="view-settings" class="hidden absolute inset-0 theme-bg flex-col w-full h-full p-3 md:p-4 z-10 overflow-y-auto hide-scrollbar">
             <div class="w-full min-h-full flex flex-col space-y-3 pb-6">
                 <div class="flex-shrink-0 flex items-center justify-between">
                     <div>
-                        <h2 class="text-lg md:text-xl font-bold text-white flex items-center gap-2">
-                            <i class="ph-fill ph-gear text-blue-500"></i> Kiosk & Fleet Configuration
+                        <h2 class="text-lg md:text-xl font-bold theme-text flex items-center gap-2">
+                            <i class="ph-fill ph-gear theme-accent-text"></i> Kiosk & Fleet Configuration
                         </h2>
                         <p class="text-gray-400 text-xs">Manage network parameters, discover printers, and control system power & updates.</p>
                     </div>
@@ -78,21 +91,21 @@
                     
                     <!-- Column 1: Active Kiosk Address (Compact) + Fleet Management (Tall) -->
                     <div class="flex flex-col gap-3 h-full">
-                        <div class="bg-gray-900 border border-gray-800 rounded-xl p-3.5 shadow-lg flex-shrink-0 flex flex-col justify-between">
+                        <div class="theme-card border rounded-xl p-3.5 shadow-lg flex-shrink-0 flex flex-col justify-between">
                             <div>
                                 <span class="text-[10px] text-gray-400 uppercase tracking-wider font-semibold">Active Kiosk Address</span>
-                                <div id="system-ip-display" class="text-base font-mono font-bold text-blue-400 mt-0.5">Fetching IP...</div>
+                                <div id="system-ip-display" class="text-base font-mono font-bold theme-accent-text mt-0.5">Fetching IP...</div>
                             </div>
                             <div class="mt-3">
-                                <button onclick="refreshSystemInfo()" class="w-full py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-200 rounded-lg text-xs font-semibold transition-colors border border-gray-700 cursor-pointer">
+                                <button onclick="refreshSystemInfo()" class="w-full py-1.5 theme-card hover:opacity-80 theme-text rounded-lg text-xs font-semibold transition-colors border theme-border cursor-pointer">
                                     Refresh IP
                                 </button>
                             </div>
                         </div>
 
-                        <div class="bg-gray-900 border border-gray-800 rounded-xl p-3.5 shadow-lg flex-1 flex flex-col justify-between min-h-[220px]">
+                        <div class="theme-card border rounded-xl p-3.5 shadow-lg flex-1 flex flex-col justify-between min-h-[220px]">
                             <div class="flex flex-col h-full">
-                                <h3 class="text-sm font-bold text-white flex items-center gap-1.5 mb-2 flex-shrink-0">
+                                <h3 class="text-sm font-bold theme-text flex items-center gap-1.5 mb-2 flex-shrink-0">
                                     <i class="ph-fill ph-printer-3d text-purple-400"></i> Fleet Management (<span id="fleet-count">0</span>)
                                 </h3>
                                 <div id="configured-fleet-list" class="space-y-1.5 flex-1 overflow-y-auto hide-scrollbar"></div>
@@ -100,60 +113,81 @@
                         </div>
                     </div>
 
-                    <!-- Column 2: Subnet Printer Discovery (Tall) + System Power & Updates (Compact) -->
+                    <!-- Column 2: Subnet Printer Discovery (Tall) + UI Theme Customization -->
                     <div class="flex flex-col gap-3 h-full">
-                        <div class="bg-gray-900 border border-gray-800 rounded-xl p-3.5 shadow-lg flex-1 flex flex-col justify-between min-h-[220px]">
+                        <div class="theme-card border rounded-xl p-3.5 shadow-lg flex-1 flex flex-col justify-between min-h-[220px]">
                             <div class="space-y-2 flex flex-col h-full">
-                                <h3 class="text-sm font-bold text-white flex items-center gap-1.5 flex-shrink-0">
-                                    <i class="ph-fill ph-radar text-blue-400"></i> Subnet Printer Discovery
+                                <h3 class="text-sm font-bold theme-text flex items-center gap-1.5 flex-shrink-0">
+                                    <i class="ph-fill ph-radar theme-accent-text"></i> Subnet Printer Discovery
                                 </h3>
-                                <button id="scan-btn" onclick="runSubnetScan()" class="w-full py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold text-xs transition-colors shadow cursor-pointer flex items-center justify-center gap-1.5 flex-shrink-0">
+                                <button id="scan-btn" onclick="runSubnetScan()" class="w-full py-2 theme-accent hover:opacity-90 text-white rounded-lg font-bold text-xs transition-colors shadow cursor-pointer flex items-center justify-center gap-1.5 flex-shrink-0">
                                     <i class="ph-bold ph-magnifying-glass"></i> Run Subnet Scan
                                 </button>
                                 <!-- Scan Progress Box -->
-                                <div id="scan-progress-box" class="hidden space-y-1 bg-gray-950 border border-gray-800 p-2.5 rounded-lg flex-shrink-0">
+                                <div id="scan-progress-box" class="hidden space-y-1 theme-bg border theme-border p-2.5 rounded-lg flex-shrink-0">
                                     <div class="flex justify-between text-[10px] text-gray-300 font-mono">
                                         <span id="scan-status-text">Searching...</span>
                                         <span id="scan-percentage">0%</span>
                                     </div>
                                     <div class="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden">
-                                        <div id="scan-progress-bar" class="bg-blue-500 h-full w-0 transition-all duration-150"></div>
+                                        <div id="scan-progress-bar" class="theme-accent h-full w-0 transition-all duration-150"></div>
                                     </div>
                                 </div>
                                 <div id="scan-results-container" class="space-y-1.5 mt-2 flex-1 overflow-y-auto hide-scrollbar"></div>
                             </div>
                         </div>
 
-                        <div class="bg-gray-900 border border-gray-800 rounded-xl p-3.5 shadow-lg flex-shrink-0 flex flex-col justify-between">
+                        <!-- UI Theme Menu Card (Fills lower space in Column 2) -->
+                        <div class="theme-card border rounded-xl p-3.5 shadow-lg flex-shrink-0 flex flex-col justify-between">
                             <div class="space-y-2">
-                                <h3 class="text-sm font-bold text-white flex items-center gap-1.5">
-                                    <i class="ph-fill ph-power text-red-400"></i> System Power & Updates
+                                <h3 class="text-sm font-bold theme-text flex items-center gap-1.5">
+                                    <i class="ph-fill ph-palette text-pink-400"></i> UI Theme & Appearance
                                 </h3>
-                                <div class="flex flex-col gap-1.5 pt-1">
-                                    <button onclick="updateSystem()" class="w-full py-1.5 bg-blue-600/20 hover:bg-blue-600 text-blue-400 hover:text-white rounded-lg font-bold text-xs transition-colors border border-blue-800 cursor-pointer flex items-center justify-center gap-1.5">
-                                        <i class="ph-bold ph-cloud-arrow-down"></i> Update Kiosk
-                                    </button>
-                                    <button onclick="rebootSystem()" class="w-full py-1.5 bg-yellow-600/20 hover:bg-yellow-600 text-yellow-400 hover:text-white rounded-lg font-bold text-xs transition-colors border border-yellow-800 cursor-pointer flex items-center justify-center gap-1.5">
-                                        <i class="ph-bold ph-arrow-clockwise"></i> Reboot Kiosk
-                                    </button>
-                                    <button onclick="shutdownSystem()" class="w-full py-1.5 bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white rounded-lg font-bold text-xs transition-colors border border-red-800 cursor-pointer flex items-center justify-center gap-1.5">
-                                        <i class="ph-bold ph-power"></i> Shutdown Kiosk
-                                    </button>
+                                <div class="grid grid-cols-2 gap-1.5 pt-1">
+                                    <button onclick="setPresetTheme('midnight')" class="py-1.5 px-2 bg-blue-950/60 hover:bg-blue-900 text-blue-300 border border-blue-800 rounded text-xs font-semibold cursor-pointer">Midnight Blue</button>
+                                    <button onclick="setPresetTheme('cyberpunk')" class="py-1.5 px-2 bg-pink-950/60 hover:bg-pink-900 text-pink-300 border border-pink-800 rounded text-xs font-semibold cursor-pointer">Cyberpunk Neon</button>
+                                    <button onclick="setPresetTheme('emerald')" class="py-1.5 px-2 bg-emerald-950/60 hover:bg-emerald-900 text-emerald-300 border border-emerald-800 rounded text-xs font-semibold cursor-pointer">Emerald Maker</button>
+                                    <button onclick="setPresetTheme('sunset')" class="py-1.5 px-2 bg-orange-950/60 hover:bg-orange-900 text-orange-300 border border-orange-800 rounded text-xs font-semibold cursor-pointer">Sunset Forge</button>
+                                </div>
+                                <div class="pt-2 border-t theme-border space-y-1.5">
+                                    <span class="text-[10px] text-gray-400 uppercase tracking-wider font-semibold">Custom Color Pickers</span>
+                                    <div class="grid grid-cols-5 gap-1 text-center">
+                                        <div>
+                                            <span class="text-[9px] text-gray-400 block">BG</span>
+                                            <input type="color" id="picker-bg" onchange="applyCustomTheme()" class="w-full h-6 bg-transparent cursor-pointer rounded border theme-border">
+                                        </div>
+                                        <div>
+                                            <span class="text-[9px] text-gray-400 block">Cards</span>
+                                            <input type="color" id="picker-card" onchange="applyCustomTheme()" class="w-full h-6 bg-transparent cursor-pointer rounded border theme-border">
+                                        </div>
+                                        <div>
+                                            <span class="text-[9px] text-gray-400 block">Text</span>
+                                            <input type="color" id="picker-text" onchange="applyCustomTheme()" class="w-full h-6 bg-transparent cursor-pointer rounded border theme-border">
+                                        </div>
+                                        <div>
+                                            <span class="text-[9px] text-gray-400 block">Accent</span>
+                                            <input type="color" id="picker-accent" onchange="applyCustomTheme()" class="w-full h-6 bg-transparent cursor-pointer rounded border theme-border">
+                                        </div>
+                                        <div>
+                                            <span class="text-[9px] text-gray-400 block">Border</span>
+                                            <input type="color" id="picker-border" onchange="applyCustomTheme()" class="w-full h-6 bg-transparent cursor-pointer rounded border theme-border">
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Column 3: Add Printer Manually (Compact) + Wi-Fi Settings (Tall) -->
+                    <!-- Column 3: Add Printer Manually (Compact) + Wi-Fi Settings (Tall) + System Power (Bottom) -->
                     <div class="flex flex-col gap-3 h-full">
-                        <div class="bg-gray-900 border border-gray-800 rounded-xl p-3.5 shadow-lg flex-shrink-0 flex flex-col justify-between">
+                        <div class="theme-card border rounded-xl p-3.5 shadow-lg flex-shrink-0 flex flex-col justify-between">
                             <div class="space-y-2">
-                                <h3 class="text-sm font-bold text-white flex items-center gap-1.5">
+                                <h3 class="text-sm font-bold theme-text flex items-center gap-1.5">
                                     <i class="ph-fill ph-plus-circle text-green-400"></i> Add Printer Manually
                                 </h3>
                                 <div class="space-y-1.5">
-                                    <input id="manual-name-input" type="text" placeholder="Printer Name (e.g. Rook MK2)" class="w-full bg-gray-950 border border-gray-800 rounded-lg px-2.5 py-1.5 text-xs text-gray-200 outline-none focus:border-blue-500">
-                                    <input id="manual-ip-input" type="text" placeholder="IP Address (e.g. 192.168.0.150)" class="w-full bg-gray-950 border border-gray-800 rounded-lg px-2.5 py-1.5 text-xs text-gray-200 outline-none focus:border-blue-500">
+                                    <input id="manual-name-input" type="text" placeholder="Printer Name (e.g. Rook MK2)" class="w-full theme-bg border theme-border rounded-lg px-2.5 py-1.5 text-xs theme-text outline-none focus:border-blue-500">
+                                    <input id="manual-ip-input" type="text" placeholder="IP Address (e.g. 192.168.0.150)" class="w-full theme-bg border theme-border rounded-lg px-2.5 py-1.5 text-xs theme-text outline-none focus:border-blue-500">
                                 </div>
                             </div>
                             <div class="mt-3">
@@ -163,23 +197,43 @@
                             </div>
                         </div>
 
-                        <div class="bg-gray-900 border border-gray-800 rounded-xl p-3.5 shadow-lg flex-1 flex flex-col justify-between min-h-[220px]">
+                        <div class="theme-card border rounded-xl p-3.5 shadow-lg flex-1 flex flex-col justify-between min-h-[220px]">
                             <div class="space-y-2 flex flex-col h-full">
-                                <h3 class="text-sm font-bold text-white flex items-center gap-1.5 flex-shrink-0">
+                                <h3 class="text-sm font-bold theme-text flex items-center gap-1.5 flex-shrink-0">
                                     <i class="ph-fill ph-wifi text-green-400"></i> Wi-Fi Settings
                                 </h3>
-                                <div id="wifi-networks-container" class="space-y-1 overflow-y-auto hide-scrollbar flex-1 bg-gray-950 border border-gray-800 p-1.5 rounded-lg max-h-32">
+                                <div id="wifi-networks-container" class="space-y-1 overflow-y-auto hide-scrollbar flex-1 theme-bg border theme-border p-1.5 rounded-lg max-h-32">
                                     <div class="text-xs text-gray-400 text-center py-2">Scanning networks...</div>
                                 </div>
                                 <div class="space-y-1.5 flex-shrink-0">
-                                    <input id="wifi-selected-ssid" type="text" readonly placeholder="Select network above" class="w-full bg-gray-950 border border-gray-800 rounded-lg px-2.5 py-1 text-xs text-gray-400 outline-none">
-                                    <input id="wifi-password-input" type="password" placeholder="Password" class="w-full bg-gray-950 border border-gray-800 rounded-lg px-2.5 py-1.5 text-xs text-gray-200 outline-none focus:border-blue-500">
+                                    <input id="wifi-selected-ssid" type="text" readonly placeholder="Select network above" class="w-full theme-bg border theme-border rounded-lg px-2.5 py-1 text-xs text-gray-400 outline-none">
+                                    <input id="wifi-password-input" type="password" placeholder="Password" class="w-full theme-bg border theme-border rounded-lg px-2.5 py-1.5 text-xs theme-text outline-none focus:border-blue-500">
                                 </div>
                             </div>
                             <div class="mt-2.5 flex-shrink-0">
-                                <button onclick="connectWifi()" class="w-full py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold text-xs transition-colors shadow cursor-pointer">
+                                <button onclick="connectWifi()" class="w-full py-1.5 theme-accent hover:opacity-95 text-white rounded-lg font-bold text-xs transition-colors shadow cursor-pointer">
                                     Connect Network
                                 </button>
+                            </div>
+                        </div>
+
+                        <!-- System Power & Updates Card -->
+                        <div class="theme-card border rounded-xl p-3.5 shadow-lg flex-shrink-0 flex flex-col justify-between">
+                            <div class="space-y-2">
+                                <h3 class="text-sm font-bold theme-text flex items-center gap-1.5">
+                                    <i class="ph-fill ph-power text-red-400"></i> System Power & Updates
+                                </h3>
+                                <div class="flex flex-col gap-1.5 pt-1">
+                                    <button onclick="updateSystem()" class="w-full py-1.5 bg-blue-600/20 hover:bg-blue-600 theme-accent-text hover:text-white rounded-lg font-bold text-xs transition-colors border border-blue-800 cursor-pointer flex items-center justify-center gap-1.5">
+                                        <i class="ph-bold ph-cloud-arrow-down"></i> Update Kiosk
+                                    </button>
+                                    <button onclick="rebootSystem()" class="w-full py-1.5 bg-yellow-600/20 hover:bg-yellow-600 text-yellow-400 hover:text-white rounded-lg font-bold text-xs transition-colors border border-yellow-800 cursor-pointer flex items-center justify-center gap-1.5">
+                                        <i class="ph-bold ph-arrow-clockwise"></i> Reboot Kiosk
+                                    </button>
+                                    <button onclick="shutdownSystem()" class="w-full py-1.5 bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white rounded-lg font-bold text-xs transition-colors border border-red-800 cursor-pointer flex items-center justify-center gap-1.5">
+                                        <i class="ph-bold ph-power"></i> Shutdown Kiosk
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -200,7 +254,15 @@
         const PAGE_SIZE = 9;
         let currentPage = 0;
 
+        const presets = {
+            midnight: { bg: '#030712', card: '#111827', text: '#e5e7eb', accent: '#3b82f6', border: '#1f2937' },
+            cyberpunk: { bg: '#09090b', card: '#18181b', text: '#f4f4f5', accent: '#ec4899', border: '#27272a' },
+            emerald: { bg: '#022c22', card: '#064e3b', text: '#ecfdf5', accent: '#10b981', border: '#047857' },
+            sunset: { bg: '#0c0a09', card: '#1c1917', text: '#f5f5f4', accent: '#f97316', border: '#292524' }
+        };
+
         async function initApp() {
+            loadSavedTheme();
             printers = await window.electronAPI.getPrinters();
             openTabs = printers.map(p => p.id); 
             renderTabs();
@@ -217,6 +279,54 @@
             });
         }
 
+        function applyThemeColors(t) {
+            document.documentElement.style.setProperty('--theme-bg', t.bg);
+            document.documentElement.style.setProperty('--theme-card', t.card);
+            document.documentElement.style.setProperty('--theme-text', t.text);
+            document.documentElement.style.setProperty('--theme-accent', t.accent);
+            document.documentElement.style.setProperty('--theme-border', t.border);
+
+            document.getElementById('picker-bg').value = t.bg;
+            document.getElementById('picker-card').value = t.card;
+            document.getElementById('picker-text').value = t.text;
+            document.getElementById('picker-accent').value = t.accent;
+            document.getElementById('picker-border').value = t.border;
+        }
+
+        function setPresetTheme(name) {
+            if (presets[name]) {
+                applyThemeColors(presets[name]);
+                localStorage.setItem('moonitor_theme', JSON.stringify(presets[name]));
+                showToast(`Applied ${name.charAt(0).toUpperCase() + name.slice(1)} theme!`);
+            }
+        }
+
+        function applyCustomTheme() {
+            const t = {
+                bg: document.getElementById('picker-bg').value,
+                card: document.getElementById('picker-card').value,
+                text: document.getElementById('picker-text').value,
+                accent: document.getElementById('picker-accent').value,
+                border: document.getElementById('picker-border').value
+            };
+            applyThemeColors(t);
+            localStorage.setItem('moonitor_theme', JSON.stringify(t));
+        }
+
+        function loadSavedTheme() {
+            const saved = localStorage.getItem('moonitor_theme');
+            if (saved) {
+                try {
+                    const t = JSON.parse(saved);
+                    applyThemeColors(t);
+                } catch (e) {
+                    applyThemeColors(presets.midnight);
+                }
+            } else {
+                applyThemeColors(presets.midnight);
+            }
+        }
+
         async function refreshSystemInfo() {
             const info = await window.electronAPI.getSystemInfo();
             document.getElementById('system-ip-display').innerText = `http://${info.ip}:${info.port}`;
@@ -230,10 +340,10 @@
                 return;
             }
             container.innerHTML = networks.map(n => `
-                <div onclick="selectWifi('${n.ssid.replace(/'/g, "\\'")}')" id="wifi-item-${n.ssid.replace(/[^a-zA-Z0-9]/g, '_')}" class="wifi-row flex items-center justify-between p-1.5 rounded cursor-pointer transition-colors ${n.active ? 'bg-blue-950/60 border border-blue-800/60' : 'hover:bg-gray-900'}">
+                <div onclick="selectWifi('${n.ssid.replace(/'/g, "\\'")}')" id="wifi-item-${n.ssid.replace(/[^a-zA-Z0-9]/g, '_')}" class="wifi-row flex items-center justify-between p-1.5 rounded cursor-pointer transition-colors ${n.active ? 'theme-accent bg-opacity-20 border theme-border' : 'hover:bg-black/20'}">
                     <div class="flex items-center gap-2 truncate">
-                        ${n.active ? '<i class="ph-fill ph-check-circle text-blue-400 text-xs"></i>' : '<i class="ph ph-wifi-high text-gray-500 text-xs"></i>'}
-                        <span class="text-xs ${n.active ? 'font-bold text-white' : 'text-gray-300'} truncate">${n.ssid}</span>
+                        ${n.active ? '<i class="ph-fill ph-check-circle theme-accent-text text-xs"></i>' : '<i class="ph ph-wifi-high text-gray-500 text-xs"></i>'}
+                        <span class="text-xs ${n.active ? 'font-bold theme-text' : 'text-gray-300'} truncate">${n.ssid}</span>
                     </div>
                     <span class="text-[10px] font-mono text-gray-500 flex-shrink-0 ml-2">${n.signal}%</span>
                 </div>
@@ -313,12 +423,12 @@
                 return;
             }
             container.innerHTML = discovered.map(p => `
-                <div class="flex items-center justify-between bg-gray-950 border border-gray-800 p-2 rounded-lg text-xs">
+                <div class="flex items-center justify-between theme-bg border theme-border p-2 rounded-lg text-xs">
                     <div>
-                        <span class="font-bold text-white">${p.name}</span>
+                        <span class="font-bold theme-text">${p.name}</span>
                         <span class="text-gray-400 ml-1.5 font-mono">${p.ip}</span>
                     </div>
-                    <button onclick="importDiscoveredPrinter('${p.name.replace(/'/g, "\\'")}', '${p.ip}')" class="px-2 py-1 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded cursor-pointer">
+                    <button onclick="importDiscoveredPrinter('${p.name.replace(/'/g, "\\'")}', '${p.ip}')" class="px-2 py-1 theme-accent hover:opacity-90 text-white font-bold rounded cursor-pointer">
                         Add
                     </button>
                 </div>
@@ -420,23 +530,23 @@
             container.innerHTML = printers.map(p => {
                 if (p.id === editingPrinterId) {
                     return `
-                        <div class="flex items-center justify-between bg-gray-950 border border-blue-500 p-2 rounded-lg text-xs gap-2">
-                            <input id="rename-input-${p.id}" type="text" value="${p.name}" class="flex-1 bg-gray-900 border border-gray-700 rounded px-2 py-1 text-xs text-white outline-none focus:border-blue-500">
+                        <div class="flex items-center justify-between theme-bg border theme-border p-2 rounded-lg text-xs gap-2">
+                            <input id="rename-input-${p.id}" type="text" value="${p.name}" class="flex-1 theme-card border theme-border rounded px-2 py-1 text-xs theme-text outline-none focus:border-blue-500">
                             <div class="flex items-center gap-1 flex-shrink-0">
                                 <button onclick="saveRename('${p.id}')" class="px-2 py-1 bg-green-600 hover:bg-green-500 text-white font-bold rounded cursor-pointer">Save</button>
-                                <button onclick="cancelRename()" class="px-2 py-1 bg-gray-800 hover:bg-gray-700 text-gray-300 font-bold rounded cursor-pointer">Cancel</button>
+                                <button onclick="cancelRename()" class="px-2 py-1 theme-card hover:opacity-80 theme-text font-bold rounded cursor-pointer border theme-border">Cancel</button>
                             </div>
                         </div>
                     `;
                 }
                 return `
-                    <div class="flex items-center justify-between bg-gray-950 border border-gray-800 p-2 rounded-lg text-xs">
+                    <div class="flex items-center justify-between theme-bg border theme-border p-2 rounded-lg text-xs">
                         <div class="truncate mr-2">
-                            <span class="font-bold text-white">${p.name}</span>
-                            <span class="text-blue-400 font-mono ml-2">${p.ip}</span>
+                            <span class="font-bold theme-text">${p.name}</span>
+                            <span class="theme-accent-text font-mono ml-2">${p.ip}</span>
                         </div>
                         <div class="flex items-center gap-1.5 flex-shrink-0">
-                            <button onclick="startRename('${p.id}')" class="px-2 py-1 bg-gray-800 hover:bg-gray-700 text-gray-300 font-bold rounded cursor-pointer border border-gray-700">
+                            <button onclick="startRename('${p.id}')" class="px-2 py-1 theme-card hover:opacity-80 theme-text font-bold rounded cursor-pointer border theme-border">
                                 Rename
                             </button>
                             <button onclick="removePrinter('${p.id}')" class="px-2 py-1 bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white font-bold rounded transition-colors cursor-pointer border border-red-800">
@@ -449,11 +559,11 @@
         }
 
         function renderTabs() {
-            const activeStyle = "px-3 py-1.5 h-full flex items-center gap-2 rounded-t-lg transition-all border-b-4 bg-gray-800 text-blue-400 border-blue-500 shadow-md";
-            const inactiveStyle = "px-3 py-1.5 h-full flex items-center gap-2 rounded-t-lg transition-all border-b-4 bg-transparent border-transparent hover:bg-gray-800 group";
+            const activeStyle = "px-3 py-1.5 h-full flex items-center gap-2 rounded-t-lg transition-all border-b-4 theme-card theme-accent-text border-blue-500 shadow-md";
+            const inactiveStyle = "px-3 py-1.5 h-full flex items-center gap-2 rounded-t-lg transition-all border-b-4 bg-transparent border-transparent hover:bg-black/20 group";
 
-            document.getElementById('tab-dashboard').className = `min-w-[130px] px-4 py-2 h-full flex items-center justify-center gap-2 rounded-t-lg transition-all font-bold text-sm border-b-4 ${activeTabId === 'dashboard' ? 'bg-gray-800 text-blue-400 border-blue-500 shadow-md' : 'bg-transparent text-gray-500 border-transparent hover:bg-gray-800 hover:text-gray-300'}`;
-            document.getElementById('tab-settings').className = `min-w-[100px] ml-auto px-4 py-2 h-full flex items-center justify-center gap-2 rounded-t-lg transition-all font-bold text-sm border-b-4 ${activeTabId === 'settings' ? 'bg-gray-800 text-blue-400 border-blue-500 shadow-md' : 'bg-transparent text-gray-500 border-transparent hover:bg-gray-800 hover:text-gray-300'}`;
+            document.getElementById('tab-dashboard').className = `min-w-[130px] px-4 py-2 h-full flex items-center justify-center gap-2 rounded-t-lg transition-all font-bold text-sm border-b-4 ${activeTabId === 'dashboard' ? 'theme-card theme-accent-text border-blue-500 shadow-md' : 'bg-transparent text-gray-500 border-transparent hover:bg-black/20 hover:text-gray-300'}`;
+            document.getElementById('tab-settings').className = `min-w-[100px] ml-auto px-4 py-2 h-full flex items-center justify-center gap-2 rounded-t-lg transition-all font-bold text-sm border-b-4 ${activeTabId === 'settings' ? 'theme-card theme-accent-text border-blue-500 shadow-md' : 'bg-transparent text-gray-500 border-transparent hover:bg-black/20 hover:text-gray-300'}`;
 
             let dynamicTabsHTML = '';
             openTabs.forEach(printerId => {
@@ -461,10 +571,10 @@
                 if (printer) {
                     const isActive = activeTabId === printerId;
                     dynamicTabsHTML += `
-                        <div class="flex items-center h-full rounded-t-lg border-b-4 ${isActive ? 'bg-gray-800 border-blue-500 shadow-md' : 'bg-transparent border-transparent hover:bg-gray-800 group'}">
+                        <div class="flex items-center h-full rounded-t-lg border-b-4 ${isActive ? 'theme-card theme-accent-text border-blue-500 shadow-md' : 'bg-transparent border-transparent hover:bg-black/20 group'}">
                             <button onclick="switchTab('${printer.id}')" class="px-3 py-1.5 h-full flex items-center gap-2 transition-all text-left cursor-pointer">
-                                <i class="ph-fill ph-printer-3d text-lg ${isActive ? 'text-blue-400' : 'text-gray-500 group-hover:text-gray-300'} flex-shrink-0"></i>
-                                <span class="line-clamp-2 leading-tight text-xs font-semibold max-w-[110px] break-words ${isActive ? 'text-blue-300' : 'text-gray-400 group-hover:text-gray-200'}">${printer.name}</span>
+                                <i class="ph-fill ph-printer-3d text-lg ${isActive ? 'theme-accent-text' : 'text-gray-500 group-hover:text-gray-300'} flex-shrink-0"></i>
+                                <span class="line-clamp-2 leading-tight text-xs font-semibold max-w-[110px] break-words ${isActive ? 'theme-text' : 'text-gray-400 group-hover:text-gray-200'}">${printer.name}</span>
                             </button>
                             <button onclick="closeTab(event, '${printer.id}')" class="pr-2 pl-0.5 py-2 h-full flex items-center text-gray-500 hover:text-red-400 transition-colors cursor-pointer">
                                 <i class="ph-bold ph-x text-sm"></i>
@@ -521,11 +631,11 @@
 
             if (printers.length === 0) {
                 grid.innerHTML = `
-                    <div class="col-span-full row-span-full flex flex-col items-center justify-center p-8 text-center bg-gray-900 border border-gray-800 rounded-2xl shadow-inner">
+                    <div class="col-span-full row-span-full flex flex-col items-center justify-center p-8 text-center theme-card border rounded-2xl shadow-inner">
                         <i class="ph-fill ph-printer-3d text-6xl text-gray-600 mb-4 animate-bounce"></i>
-                        <h2 class="text-2xl font-bold text-white mb-2">No Printers Configured</h2>
+                        <h2 class="text-2xl font-bold theme-text mb-2">No Printers Configured</h2>
                         <p class="text-gray-400 text-sm max-w-md mb-6">Your kiosk is currently in a blank state. Run the subnet scanner in Settings to discover printers automatically, or add them manually.</p>
-                        <button onclick="switchTab('settings')" class="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold text-sm transition-colors shadow-lg cursor-pointer flex items-center gap-2">
+                        <button onclick="switchTab('settings')" class="px-6 py-3 theme-accent hover:opacity-90 text-white rounded-xl font-bold text-sm transition-colors shadow-lg cursor-pointer flex items-center gap-2">
                             <i class="ph-bold ph-gear"></i> Go to Settings & Scanner
                         </button>
                     </div>
@@ -537,38 +647,38 @@
             }
 
             grid.innerHTML = pagePrinters.map(printer => `
-                <div class="relative w-full h-full bg-gray-900 rounded-lg shadow-md border border-gray-800 overflow-hidden group flex items-center justify-center">
-                    <div class="absolute inset-0 w-full h-full bg-gray-900 flex items-center justify-center overflow-hidden">
-                        <div class="h-full aspect-[${printer.ratioVal}] bg-black flex flex-col items-center justify-center text-gray-500 font-mono select-none shadow-inner border border-gray-800/60">
+                <div class="relative w-full h-full theme-card rounded-lg shadow-md border overflow-hidden group flex items-center justify-center">
+                    <div class="absolute inset-0 w-full h-full theme-card flex items-center justify-center overflow-hidden">
+                        <div class="h-full aspect-[${printer.ratioVal}] bg-black flex flex-col items-center justify-center text-gray-500 font-mono select-none shadow-inner border theme-border">
                             <i class="ph ph-camera text-3xl mb-1 text-gray-600"></i>
                             <span class="text-[11px] uppercase tracking-widest text-gray-400">${printer.ip}</span>
                         </div>
                     </div>
                     
-                    <div class="absolute top-2 left-2 z-10 bg-gray-900/95 backdrop-blur-sm px-2 py-1 rounded text-xs font-mono font-bold text-gray-200 border border-gray-700 shadow flex gap-2">
+                    <div class="absolute top-2 left-2 z-10 theme-card theme-text backdrop-blur-sm px-2 py-1 rounded text-xs font-mono font-bold border theme-border shadow flex gap-2">
                         <span>${printer.name}</span>
-                        <span class="text-gray-500 border-l border-gray-600 pl-2">${printer.ip}</span>
+                        <span class="text-gray-500 border-l theme-border pl-2">${printer.ip}</span>
                     </div>
 
-                    <div class="absolute inset-0 bg-gray-950/90 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all duration-300 z-20 flex flex-col justify-center items-center p-2 text-center">
-                        <h3 class="text-white font-bold text-xl md:text-2xl mb-2 tracking-wider">${printer.name}</h3>
-                        <p class="text-xs text-blue-400 font-mono mb-4">${printer.ip}</p>
+                    <div class="absolute inset-0 bg-black/90 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all duration-300 z-20 flex flex-col justify-center items-center p-2 text-center">
+                        <h3 class="theme-text font-bold text-xl md:text-2xl mb-2 tracking-wider">${printer.name}</h3>
+                        <p class="text-xs theme-accent-text font-mono mb-4">${printer.ip}</p>
                         <div class="flex gap-6 md:gap-10 mb-4 md:mb-6">
                             <div class="flex flex-col items-center">
                                 <span class="text-[10px] md:text-xs text-orange-400 font-bold uppercase tracking-widest"><i class="ph-fill ph-fire"></i> Hotend</span>
-                                <span class="font-mono text-lg md:text-2xl font-bold text-white">${printer.tempHotend}°</span>
+                                <span class="font-mono text-lg md:text-2xl font-bold theme-text">${printer.tempHotend}°</span>
                             </div>
                             <div class="flex flex-col items-center">
-                                <span class="text-[10px] md:text-xs text-blue-400 font-bold uppercase tracking-widest"><i class="ph-fill ph-thermometer"></i> Bed</span>
-                                <span class="font-mono text-lg md:text-2xl font-bold text-white">${printer.tempBed}°</span>
+                                <span class="text-[10px] md:text-xs theme-accent-text font-bold uppercase tracking-widest"><i class="ph-fill ph-thermometer"></i> Bed</span>
+                                <span class="font-mono text-lg md:text-2xl font-bold theme-text">${printer.tempBed}°</span>
                             </div>
                         </div>
                         <div class="flex gap-3 md:gap-5 mb-4 md:mb-6">
-                            <button class="w-12 h-12 rounded-full bg-gray-800 hover:bg-green-600 transition-colors flex items-center justify-center text-white text-xl border border-gray-600 cursor-pointer" onclick="triggerAction(event, '${printer.name}', 'Started')"><i class="ph-fill ph-play"></i></button>
-                            <button class="w-12 h-12 rounded-full bg-gray-800 hover:bg-yellow-600 transition-colors flex items-center justify-center text-white text-xl border border-gray-600 cursor-pointer" onclick="triggerAction(event, '${printer.name}', 'Paused')"><i class="ph-fill ph-pause"></i></button>
-                            <button class="w-12 h-12 rounded-full bg-gray-800 hover:bg-red-600 transition-colors flex items-center justify-center text-white text-xl border border-gray-600 cursor-pointer" onclick="triggerAction(event, '${printer.name}', 'Stopped')"><i class="ph-fill ph-stop"></i></button>
+                            <button class="w-12 h-12 rounded-full theme-card hover:bg-green-600 transition-colors flex items-center justify-center theme-text text-xl border theme-border cursor-pointer" onclick="triggerAction(event, '${printer.name}', 'Started')"><i class="ph-fill ph-play"></i></button>
+                            <button class="w-12 h-12 rounded-full theme-card hover:bg-yellow-600 transition-colors flex items-center justify-center theme-text text-xl border theme-border cursor-pointer" onclick="triggerAction(event, '${printer.name}', 'Paused')"><i class="ph-fill ph-pause"></i></button>
+                            <button class="w-12 h-12 rounded-full theme-card hover:bg-red-600 transition-colors flex items-center justify-center theme-text text-xl border theme-border cursor-pointer" onclick="triggerAction(event, '${printer.name}', 'Stopped')"><i class="ph-fill ph-stop"></i></button>
                         </div>
-                        <button onclick="openFullUI('${printer.id}')" class="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold text-sm transition-colors flex justify-center items-center gap-2 shadow-xl cursor-pointer">
+                        <button onclick="openFullUI('${printer.id}')" class="px-6 py-3 theme-accent hover:opacity-90 text-white rounded-xl font-bold text-sm transition-colors flex justify-center items-center gap-2 shadow-xl cursor-pointer">
                             Open Full UI <i class="ph-bold ph-arrow-square-out text-lg"></i>
                         </button>
                     </div>
@@ -585,8 +695,8 @@
         function showToast(message) {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
-            toast.className = 'bg-gray-800 border border-gray-600 text-gray-200 px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 toast-animate text-sm';
-            toast.innerHTML = `<i class="ph-fill ph-info text-blue-400 text-xl"></i> <span>${message}</span>`;
+            toast.className = 'theme-card border theme-border theme-text px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 toast-animate text-sm';
+            toast.innerHTML = `<i class="ph-fill ph-info theme-accent-text text-xl"></i> <span>${message}</span>`;
             container.appendChild(toast);
             setTimeout(() => { toast.remove(); }, 3000);
         }
@@ -597,7 +707,7 @@
             document.getElementById('btn-next').classList.toggle('hidden', currentPage >= totalPages - 1 || totalPages <= 1);
             let dotsHTML = '';
             for (let i = 0; i < totalPages; i++) {
-                dotsHTML += `<div class="h-2 rounded-full transition-all duration-300 ${i === currentPage ? 'bg-blue-500 w-6' : 'bg-gray-700 w-2'}"></div>`;
+                dotsHTML += `<div class="h-2 rounded-full transition-all duration-300 ${i === currentPage ? 'theme-accent w-6' : 'bg-gray-700 w-2'}"></div>`;
             }
             document.getElementById('pagination-dots').innerHTML = dotsHTML;
         }
