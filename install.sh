@@ -74,9 +74,9 @@ echo "[+] Installing project NPM dependencies in $INSTALL_DIR..."
 cd "$INSTALL_DIR"
 npm install
 
-echo "[+] Installing project NPM dependencies in $INSTALL_DIR..."
-cd "$INSTALL_DIR"
-npm install
+echo "[+] Configuring passwordless power controls for $TARGET_USER..."
+echo "$TARGET_USER ALL=(ALL) NOPASSWD: /sbin/reboot, /sbin/poweroff, /bin/systemctl reboot, /bin/systemctl poweroff" > /etc/sudoers.d/moonitor-power
+chmod 440 /etc/sudoers.d/moonitor-power
 
 echo "[+] Setting permissions for user $TARGET_USER..."
 chown -R "$TARGET_USER:$TARGET_USER" "$INSTALL_DIR"

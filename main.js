@@ -73,13 +73,13 @@ ipcMain.handle('system-update', () => {
 });
 
 ipcMain.handle('system-reboot', () => {
-  exec('sudo reboot', (err) => {
+  exec('sudo systemctl reboot', (err) => {
     if (err) console.error('Reboot failed:', err);
   });
 });
 
 ipcMain.handle('system-shutdown', () => {
-  exec('sudo shutdown -h now', (err) => {
+  exec('sudo systemctl poweroff', (err) => {
     if (err) console.error('Shutdown failed:', err);
   });
 });
