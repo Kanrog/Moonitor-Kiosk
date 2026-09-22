@@ -75,11 +75,8 @@ cd "$INSTALL_DIR"
 npm install
 
 echo "[+] Configuring passwordless power controls for $TARGET_USER..."
-echo "$TARGET_USER ALL=(ALL) NOPASSWD: /sbin/reboot, /sbin/poweroff, /bin/systemctl reboot, /bin/systemctl poweroff" > /etc/sudoers.d/moonitor-power
+echo "$TARGET_USER ALL=(ALL) NOPASSWD: /sbin/reboot, /usr/sbin/reboot, /sbin/poweroff, /usr/sbin/poweroff, /bin/systemctl reboot, /usr/bin/systemctl reboot, /bin/systemctl poweroff, /usr/bin/systemctl poweroff" > /etc/sudoers.d/moonitor-power
 chmod 440 /etc/sudoers.d/moonitor-power
-
-echo "[+] Setting permissions for user $TARGET_USER..."
-chown -R "$TARGET_USER:$TARGET_USER" "$INSTALL_DIR"
 
 echo "[+] Configuring automatic login on tty1 for user: $TARGET_USER..."
 mkdir -p /etc/systemd/system/getty@tty1.service.d
@@ -110,5 +107,8 @@ fi
 
 systemctl daemon-reload
 systemctl enable getty@tty1
+
+echo "[+] Fixing final ownership permissions for $TARGET_USER..."
+chown -R "$TARGET_USER:$TARGET_USER" "$INSTALL_DIR"
 
 echo "[+] Moonitor-Kiosk complete pure kiosk installation finished successfully!"

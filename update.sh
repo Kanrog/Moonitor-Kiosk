@@ -14,11 +14,14 @@ if [ ! -d "$INSTALL_DIR" ]; then
   exit 1
 fi
 
-echo "[+] Copying latest application files (including .git) to $INSTALL_DIR..."
+echo "[+] Copying latest application files to $INSTALL_DIR..."
 rsync -av ./ "$INSTALL_DIR/"
 
 echo "[+] Updating Node.js dependencies..."
 cd "$INSTALL_DIR"
 npm install
+
+echo "[+] Fixing ownership permissions..."
+chown -R moonitor:moonitor "$INSTALL_DIR"
 
 echo "[+] Update completed successfully!"
