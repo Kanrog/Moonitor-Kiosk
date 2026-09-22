@@ -43,7 +43,7 @@
 
             <div id="printer-grid" class="flex-1 w-full h-full min-h-0 grid grid-cols-2 md:grid-cols-3 grid-rows-3 gap-2 md:gap-4 transition-opacity duration-300"></div>
 
-            <button id="btn-next" onclick="nextPage()" class="absolute right-0 top-1/2 -translate-y-1/2 z-30 bg-gray-800/90 hover:bg-gray-700 text-white p-3 md:p-4 rounded-l-xl shadow-2xl transition-all border border-r-0 border-gray-600 backdrop-blur-sm cursor-pointer">
+            <button id="btn-next" onclick="nextPage()" class="absolute right-0 top-1/2 -translate-y-1/2 z-30 bg-gray-800/90 hover:bg-gray-700 text-white p-3 md:p-4 rounded-l-xl shadow-2xl transition-all border border-r-0 border-gray-600 hidden backdrop-blur-sm cursor-pointer">
                 <i class="ph-bold ph-caret-right text-3xl"></i>
             </button>
 
@@ -76,13 +76,15 @@
 
                 <div class="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 overflow-y-auto hide-scrollbar pb-2">
                     
-                    <!-- Kiosk IP Info Card -->
+                    <!-- Kiosk IP Info Card (Compact) -->
                     <div class="bg-gray-900 border border-gray-800 rounded-xl p-3.5 shadow-lg flex flex-col justify-between">
-                        <div>
-                            <span class="text-[10px] text-gray-400 uppercase tracking-wider font-semibold">Active Kiosk Address</span>
-                            <div id="system-ip-display" class="text-base font-mono font-bold text-blue-400 mt-0.5">Fetching IP...</div>
+                        <div class="space-y-1.5">
+                            <h3 class="text-sm font-bold text-white flex items-center gap-1.5">
+                                <i class="ph-fill ph-desktop text-blue-400"></i> Active Kiosk Address
+                            </h3>
+                            <div id="system-ip-display" class="text-base font-mono font-bold text-blue-400">Fetching IP...</div>
                         </div>
-                        <div class="mt-3">
+                        <div class="mt-2">
                             <button onclick="refreshSystemInfo()" class="w-full py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-200 rounded-lg text-xs font-semibold transition-colors border border-gray-700 cursor-pointer">
                                 Refresh IP
                             </button>
@@ -130,13 +132,13 @@
                         </div>
                     </div>
 
-                    <!-- Configured Fleet Management Card -->
-                    <div class="bg-gray-900 border border-gray-800 rounded-xl p-3.5 shadow-lg flex flex-col justify-between">
-                        <div>
-                            <h3 class="text-sm font-bold text-white flex items-center gap-1.5 mb-2">
-                                <i class="ph-fill ph-printer-3d text-purple-400"></i> Fleet (<span id="fleet-count">0</span>)
+                    <!-- Configured Fleet Management Card (Spans 2 rows on large screens for height) -->
+                    <div class="bg-gray-900 border border-gray-800 rounded-xl p-3.5 shadow-lg flex flex-col justify-between lg:row-span-2">
+                        <div class="flex flex-col h-full">
+                            <h3 class="text-sm font-bold text-white flex items-center gap-1.5 mb-2 flex-shrink-0">
+                                <i class="ph-fill ph-printer-3d text-purple-400"></i> Fleet Management (<span id="fleet-count">0</span>)
                             </h3>
-                            <div id="configured-fleet-list" class="space-y-1.5 max-h-36 overflow-y-auto hide-scrollbar"></div>
+                            <div id="configured-fleet-list" class="space-y-1.5 flex-1 overflow-y-auto hide-scrollbar max-h-[260px] lg:max-h-none"></div>
                         </div>
                     </div>
 
@@ -191,6 +193,7 @@
         let printers = [];
         let activeTabId = 'dashboard';
         let openTabs = [];
+        let editingPrinterId = null;
         const PAGE_SIZE = 9;
         let currentPage = 0;
 
@@ -338,18 +341,31 @@
             showToast(`Added ${name}!`);
         }
 
-        async function renamePrinter(printerId) {
-            const printer = printers.find(p => p.id === printerId);
-            if (!printer) return;
-            const newName = prompt('Enter new printer name:', printer.name);
-            if (newName && newName.trim() !== '') {
-                printer.name = newName.trim();
-                await window.electronAPI.savePrinters(printers);
-                renderDashboard();
-                renderFleetManagement();
-                renderTabs();
-                showToast(`Renamed to ${printer.name}`);
+        function startRename(printerId) {
+            editingPrinterId = printerId;
+            renderFleetManagement();
+        }
+
+        function cancelRename() {
+            editingPrinterId = null;
+            renderFleetManagement();
+        }
+
+        async function saveRename(printerId) {
+            const input = document.getElementById(`rename-input-${printerId}`);
+            if (input && input.value.trim() !== '') {
+                const printer = printers.find(p => p.id === printerId);
+                if (printer) {
+                    printer.name = input.value.trim();
+                    await window.electronAPI.savePrinters(printers);
+                    renderDashboard();
+                    renderFleetManagement();
+                    renderTabs();
+                    showToast(`Renamed to ${printer.name}`);
+                }
             }
+            editingPrinterId = null;
+            renderFleetManagement();
         }
 
         async function removePrinter(printerId) {
@@ -370,22 +386,35 @@
                 container.innerHTML = `<p class="text-xs text-gray-500 italic">No printers configured.</p>`;
                 return;
             }
-            container.innerHTML = printers.map(p => `
-                <div class="flex items-center justify-between bg-gray-950 border border-gray-800 p-2 rounded-lg text-xs">
-                    <div class="truncate mr-2">
-                        <span class="font-bold text-white">${p.name}</span>
-                        <span class="text-blue-400 font-mono ml-2">${p.ip}</span>
+            container.innerHTML = printers.map(p => {
+                if (p.id === editingPrinterId) {
+                    return `
+                        <div class="flex items-center justify-between bg-gray-950 border border-blue-500 p-2 rounded-lg text-xs gap-2">
+                            <input id="rename-input-${p.id}" type="text" value="${p.name}" class="flex-1 bg-gray-900 border border-gray-700 rounded px-2 py-1 text-xs text-white outline-none focus:border-blue-500">
+                            <div class="flex items-center gap-1 flex-shrink-0">
+                                <button onclick="saveRename('${p.id}')" class="px-2 py-1 bg-green-600 hover:bg-green-500 text-white font-bold rounded cursor-pointer">Save</button>
+                                <button onclick="cancelRename()" class="px-2 py-1 bg-gray-800 hover:bg-gray-700 text-gray-300 font-bold rounded cursor-pointer">Cancel</button>
+                            </div>
+                        </div>
+                    `;
+                }
+                return `
+                    <div class="flex items-center justify-between bg-gray-950 border border-gray-800 p-2 rounded-lg text-xs">
+                        <div class="truncate mr-2">
+                            <span class="font-bold text-white">${p.name}</span>
+                            <span class="text-blue-400 font-mono ml-2">${p.ip}</span>
+                        </div>
+                        <div class="flex items-center gap-1.5 flex-shrink-0">
+                            <button onclick="startRename('${p.id}')" class="px-2 py-1 bg-gray-800 hover:bg-gray-700 text-gray-300 font-bold rounded cursor-pointer border border-gray-700">
+                                Rename
+                            </button>
+                            <button onclick="removePrinter('${p.id}')" class="px-2 py-1 bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white font-bold rounded transition-colors cursor-pointer border border-red-800">
+                                Del
+                            </button>
+                        </div>
                     </div>
-                    <div class="flex items-center gap-1.5 flex-shrink-0">
-                        <button onclick="renamePrinter('${p.id}')" class="px-2 py-1 bg-gray-800 hover:bg-gray-700 text-gray-300 font-bold rounded cursor-pointer border border-gray-700">
-                            Rename
-                        </button>
-                        <button onclick="removePrinter('${p.id}')" class="px-2 py-1 bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white font-bold rounded transition-colors cursor-pointer border border-red-800">
-                            Del
-                        </button>
-                    </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         function renderTabs() {
