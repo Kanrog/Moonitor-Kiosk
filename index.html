@@ -64,14 +64,9 @@
         </div>
 
         <!-- Webview / Printer Interface View -->
-        <div id="view-webview" class="hidden absolute inset-0 theme-bg flex-col items-center justify-center w-full h-full p-4 md:p-8 z-10">
-            <div class="theme-card border rounded-2xl w-full h-full flex flex-col items-center justify-center shadow-inner relative overflow-hidden">
-                <i class="ph ph-browser text-7xl text-gray-700 mb-4"></i>
-                <h2 class="text-3xl md:text-4xl font-bold theme-text mb-2 text-center">Mainsail / Fluidd Web Interface</h2>
-                <div class="mt-4 px-6 py-2 theme-bg rounded-full border theme-border flex items-center gap-3">
-                    <span class="w-3 h-3 rounded-full bg-green-500 animate-pulse"></span>
-                    <span class="text-xl theme-text">Connected to: <span id="webview-printer-name" class="font-bold">Printer Name</span> (<span id="webview-printer-ip" class="font-mono theme-accent-text">IP</span>)</span>
-                </div>
+        <div id="view-webview" class="hidden absolute inset-0 theme-bg flex-col items-center justify-center w-full h-full p-2 md:p-4 z-10">
+            <div class="theme-card border rounded-2xl w-full h-full flex flex-col shadow-inner relative overflow-hidden">
+                <webview id="printer-webview" class="w-full h-full bg-black" src="about:blank"></webview>
             </div>
         </div>
 
@@ -601,8 +596,12 @@
                 const printer = printers.find(p => p.id === tabId);
                 document.getElementById('view-webview').classList.remove('hidden');
                 document.getElementById('view-webview').classList.add('flex');
-                document.getElementById('webview-printer-name').textContent = printer.name;
-                document.getElementById('webview-printer-ip').textContent = printer.ip;
+                
+                const webview = document.getElementById('printer-webview');
+                const targetUrl = `http://${printer.ip}`;
+                if (webview.src !== targetUrl) {
+                    webview.src = targetUrl;
+                }
             }
         }
 

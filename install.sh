@@ -62,9 +62,6 @@ apt install -y \
 echo "[+] Installing raw X server packages..."
 apt install -y xserver-xorg x11-xserver-utils xinit
 
-echo "[+] Ensuring system boots into multi-user text target..."
-systemctl set-default multi-user.target
-
 echo "[+] Setting up installation directory at /opt/moonitor-kiosk..."
 INSTALL_DIR="/opt/moonitor-kiosk"
 mkdir -p "$INSTALL_DIR"
@@ -78,37 +75,38 @@ echo "[+] Configuring passwordless power controls for $TARGET_USER..."
 echo "$TARGET_USER ALL=(ALL) NOPASSWD: /sbin/reboot, /usr/sbin/reboot, /sbin/poweroff, /usr/sbin/poweroff, /bin/systemctl reboot, /usr/bin/systemctl reboot, /bin/systemctl poweroff, /usr/bin/systemctl poweroff" > /etc/sudoers.d/moonitor-power
 chmod 440 /etc/sudoers.d/moonitor-power
 
-echo "[+] Configuring automatic login on tty1 for user: $TARGET_USER..."
-mkdir -p /etc/systemd/system/getty@tty1.service.d
-cat << EOF > /etc/systemd/system/getty@tty1.service.d/autologin.conf
-[Service]
-ExecStart=
-ExecStart=-/sbin/agetty --autologin $TARGET_USER --noclear %I \$TERM
-EOF
-
-echo "[+] Configuring direct app launch for $TARGET_USER..."
-cat << 'EOF' > "$TARGET_HOME/.xinitrc"
+echo "[+] Creating dynamic X11 launcher wrapper..."
+cat << 'EOF' > "$INSTALL_DIR/launch.sh"
+#!/bin/bash
+export DISPLAY=:0
+export XAUTHORITY=$(ls -t /tmp/serverauth* 2>/dev/null | head -n 1)
 cd /opt/moonitor-kiosk
 exec npm start
 EOF
-chown "$TARGET_USER:$TARGET_USER" "$TARGET_HOME/.xinitrc"
-chmod +x "$TARGET_HOME/.xinitrc"
+chmod +x "$INSTALL_DIR/launch.sh"
 
-if ! grep -q "startx" "$TARGET_HOME/.bash_profile" 2>/dev/null; then
-    cat << 'EOF' >> "$TARGET_HOME/.bash_profile"
+echo "[+] Configuring systemd service for Moonitor Kiosk..."
+cat << EOF > /etc/systemd/system/moonitor-kiosk.service
+[Unit]
+Description=Moonitor Kiosk
+After=network.target graphical.target
 
-# Auto-start X11 kiosk on login to tty1
-if [ -z "$DISPLAY" ] && [ "$(tty)" = "/dev/tty1" ]; then
-    exec startx
-fi
+[Service]
+User=$TARGET_USER
+Group=$TARGET_USER
+WorkingDirectory=$INSTALL_DIR
+ExecStart=$INSTALL_DIR/launch.sh
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=graphical.target
 EOF
-    chown "$TARGET_USER:$TARGET_USER" "$TARGET_HOME/.bash_profile"
-fi
 
 systemctl daemon-reload
-systemctl enable getty@tty1
+systemctl enable moonitor-kiosk
 
 echo "[+] Fixing final ownership permissions for $TARGET_USER..."
 chown -R "$TARGET_USER:$TARGET_USER" "$INSTALL_DIR"
 
-echo "[+] Moonitor-Kiosk complete pure kiosk installation finished successfully!"
+echo "[+] Moonitor-Kiosk complete installation finished successfully!"[cite: 7]
