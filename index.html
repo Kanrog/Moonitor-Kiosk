@@ -172,6 +172,11 @@
                                         </div>
                                     </div>
                                 </div>
+                                <!-- Touchscreen Keyboard Toggle -->
+                                <div class="flex items-center justify-between pt-2 border-t theme-border">
+                                    <span class="text-xs theme-text font-semibold flex items-center gap-1.5"><i class="ph-fill ph-keyboard theme-accent-text"></i> Touchscreen Keyboard</span>
+                                    <input type="checkbox" id="touch-keyboard-toggle" onchange="toggleTouchKeyboardSetting()" class="w-4 h-4 accent-blue-500 cursor-pointer">
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -240,6 +245,69 @@
         </div>
     </main>
 
+    <!-- On-Screen Virtual Keyboard Overlay -->
+    <div id="virtual-keyboard" class="fixed bottom-0 left-0 right-0 theme-card border-t-2 theme-border p-3 shadow-2xl z-50 hidden flex-col gap-2">
+        <div class="flex justify-between items-center pb-1 border-b theme-border max-w-4xl mx-auto w-full">
+            <span class="text-xs font-bold theme-text flex items-center gap-1.5"><i class="ph-fill ph-keyboard theme-accent-text"></i> Virtual Keyboard</span>
+            <button onclick="hideVirtualKeyboard()" class="px-2.5 py-1 bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white rounded text-xs font-bold cursor-pointer">Close</button>
+        </div>
+        <div class="flex flex-col gap-1.5 max-w-4xl mx-auto w-full">
+            <div class="flex justify-center gap-1">
+                <button onclick="sendKey('1')" class="flex-1 py-2 theme-bg border theme-border rounded text-xs font-bold theme-text hover:opacity-80 cursor-pointer">1</button>
+                <button onclick="sendKey('2')" class="flex-1 py-2 theme-bg border theme-border rounded text-xs font-bold theme-text hover:opacity-80 cursor-pointer">2</button>
+                <button onclick="sendKey('3')" class="flex-1 py-2 theme-bg border theme-border rounded text-xs font-bold theme-text hover:opacity-80 cursor-pointer">3</button>
+                <button onclick="sendKey('4')" class="flex-1 py-2 theme-bg border theme-border rounded text-xs font-bold theme-text hover:opacity-80 cursor-pointer">4</button>
+                <button onclick="sendKey('5')" class="flex-1 py-2 theme-bg border theme-border rounded text-xs font-bold theme-text hover:opacity-80 cursor-pointer">5</button>
+                <button onclick="sendKey('6')" class="flex-1 py-2 theme-bg border theme-border rounded text-xs font-bold theme-text hover:opacity-80 cursor-pointer">6</button>
+                <button onclick="sendKey('7')" class="flex-1 py-2 theme-bg border theme-border rounded text-xs font-bold theme-text hover:opacity-80 cursor-pointer">7</button>
+                <button onclick="sendKey('8')" class="flex-1 py-2 theme-bg border theme-border rounded text-xs font-bold theme-text hover:opacity-80 cursor-pointer">8</button>
+                <button onclick="sendKey('9')" class="flex-1 py-2 theme-bg border theme-border rounded text-xs font-bold theme-text hover:opacity-80 cursor-pointer">9</button>
+                <button onclick="sendKey('0')" class="flex-1 py-2 theme-bg border theme-border rounded text-xs font-bold theme-text hover:opacity-80 cursor-pointer">0</button>
+                <button onclick="sendKey('backspace')" class="px-4 py-2 bg-red-600/20 border border-red-800 rounded text-xs font-bold text-red-400 hover:bg-red-600 hover:text-white cursor-pointer"><i class="ph-bold ph-backspace"></i></button>
+            </div>
+            <div class="flex justify-center gap-1">
+                <button onclick="sendKey('q')" class="flex-1 py-2 theme-bg border theme-border rounded text-xs font-bold theme-text hover:opacity-80 cursor-pointer">q</button>
+                <button onclick="sendKey('w')" class="flex-1 py-2 theme-bg border theme-border rounded text-xs font-bold theme-text hover:opacity-80 cursor-pointer">w</button>
+                <button onclick="sendKey('e')" class="flex-1 py-2 theme-bg border theme-border rounded text-xs font-bold theme-text hover:opacity-80 cursor-pointer">e</button>
+                <button onclick="sendKey('r')" class="flex-1 py-2 theme-bg border theme-border rounded text-xs font-bold theme-text hover:opacity-80 cursor-pointer">r</button>
+                <button onclick="sendKey('t')" class="flex-1 py-2 theme-bg border theme-border rounded text-xs font-bold theme-text hover:opacity-80 cursor-pointer">t</button>
+                <button onclick="sendKey('y')" class="flex-1 py-2 theme-bg border theme-border rounded text-xs font-bold theme-text hover:opacity-80 cursor-pointer">y</button>
+                <button onclick="sendKey('u')" class="flex-1 py-2 theme-bg border theme-border rounded text-xs font-bold theme-text hover:opacity-80 cursor-pointer">u</button>
+                <button onclick="sendKey('i')" class="flex-1 py-2 theme-bg border theme-border rounded text-xs font-bold theme-text hover:opacity-80 cursor-pointer">i</button>
+                <button onclick="sendKey('o')" class="flex-1 py-2 theme-bg border theme-border rounded text-xs font-bold theme-text hover:opacity-80 cursor-pointer">o</button>
+                <button onclick="sendKey('p')" class="flex-1 py-2 theme-bg border theme-border rounded text-xs font-bold theme-text hover:opacity-80 cursor-pointer">p</button>
+            </div>
+            <div class="flex justify-center gap-1 px-4">
+                <button onclick="sendKey('a')" class="flex-1 py-2 theme-bg border theme-border rounded text-xs font-bold theme-text hover:opacity-80 cursor-pointer">a</button>
+                <button onclick="sendKey('s')" class="flex-1 py-2 theme-bg border theme-border rounded text-xs font-bold theme-text hover:opacity-80 cursor-pointer">s</button>
+                <button onclick="sendKey('d')" class="flex-1 py-2 theme-bg border theme-border rounded text-xs font-bold theme-text hover:opacity-80 cursor-pointer">d</button>
+                <button onclick="sendKey('f')" class="flex-1 py-2 theme-bg border theme-border rounded text-xs font-bold theme-text hover:opacity-80 cursor-pointer">f</button>
+                <button onclick="sendKey('g')" class="flex-1 py-2 theme-bg border theme-border rounded text-xs font-bold theme-text hover:opacity-80 cursor-pointer">g</button>
+                <button onclick="sendKey('h')" class="flex-1 py-2 theme-bg border theme-border rounded text-xs font-bold theme-text hover:opacity-80 cursor-pointer">h</button>
+                <button onclick="sendKey('j')" class="flex-1 py-2 theme-bg border theme-border rounded text-xs font-bold theme-text hover:opacity-80 cursor-pointer">j</button>
+                <button onclick="sendKey('k')" class="flex-1 py-2 theme-bg border theme-border rounded text-xs font-bold theme-text hover:opacity-80 cursor-pointer">k</button>
+                <button onclick="sendKey('l')" class="flex-1 py-2 theme-bg border theme-border rounded text-xs font-bold theme-text hover:opacity-80 cursor-pointer">l</button>
+            </div>
+            <div class="flex justify-center gap-1">
+                <button onclick="toggleKeyboardShift()" id="keyboard-shift-btn" class="px-4 py-2 theme-bg border theme-border rounded text-xs font-bold theme-text hover:opacity-80 cursor-pointer"><i class="ph-bold ph-arrow-up"></i></button>
+                <button onclick="sendKey('z')" class="flex-1 py-2 theme-bg border theme-border rounded text-xs font-bold theme-text hover:opacity-80 cursor-pointer">z</button>
+                <button onclick="sendKey('x')" class="flex-1 py-2 theme-bg border theme-border rounded text-xs font-bold theme-text hover:opacity-80 cursor-pointer">x</button>
+                <button onclick="sendKey('c')" class="flex-1 py-2 theme-bg border theme-border rounded text-xs font-bold theme-text hover:opacity-80 cursor-pointer">c</button>
+                <button onclick="sendKey('v')" class="flex-1 py-2 theme-bg border theme-border rounded text-xs font-bold theme-text hover:opacity-80 cursor-pointer">v</button>
+                <button onclick="sendKey('b')" class="flex-1 py-2 theme-bg border theme-border rounded text-xs font-bold theme-text hover:opacity-80 cursor-pointer">b</button>
+                <button onclick="sendKey('n')" class="flex-1 py-2 theme-bg border theme-border rounded text-xs font-bold theme-text hover:opacity-80 cursor-pointer">n</button>
+                <button onclick="sendKey('m')" class="flex-1 py-2 theme-bg border theme-border rounded text-xs font-bold theme-text hover:opacity-80 cursor-pointer">m</button>
+                <button onclick="sendKey('.')" class="flex-1 py-2 theme-bg border theme-border rounded text-xs font-bold theme-text hover:opacity-80 cursor-pointer">.</button>
+                <button onclick="sendKey('enter')" class="px-5 py-2 theme-accent text-white rounded text-xs font-bold hover:opacity-90 cursor-pointer">Enter</button>
+            </div>
+            <div class="flex justify-center gap-1">
+                <button onclick="sendKey('@')" class="px-6 py-2 theme-bg border theme-border rounded text-xs font-bold theme-text hover:opacity-80 cursor-pointer">@</button>
+                <button onclick="sendKey(' ')" class="flex-1 py-2 theme-bg border theme-border rounded text-xs font-bold theme-text hover:opacity-80 cursor-pointer">Space</button>
+                <button onclick="sendKey('-')" class="px-6 py-2 theme-bg border theme-border rounded text-xs font-bold theme-text hover:opacity-80 cursor-pointer">-</button>
+            </div>
+        </div>
+    </div>
+
     <div id="toast-container" class="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
     <script>
@@ -250,6 +318,9 @@
         let selectedWifiSsid = '';
         const PAGE_SIZE = 9;
         let currentPage = 0;
+        let touchKeyboardEnabled = false;
+        let activeInputTarget = null;
+        let keyboardShiftActive = false;
 
         const presets = {
             midnight: { bg: '#030712', card: '#111827', text: '#e5e7eb', accent: '#3b82f6', border: '#1f2937' },
@@ -260,6 +331,7 @@
 
         async function initApp() {
             loadSavedTheme();
+            loadTouchKeyboardSetting();
             printers = await window.electronAPI.getPrinters();
             openTabs = printers.map(p => p.id); 
             renderTabs();
@@ -280,12 +352,90 @@
                 loader.classList.remove('flex');
             });
 
+            // Virtual keyboard focus listeners
+            document.addEventListener('focusin', (e) => {
+                if (touchKeyboardEnabled && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) {
+                    if (e.target.type !== 'color' && e.target.type !== 'checkbox' && !e.target.readOnly) {
+                        activeInputTarget = e.target;
+                        showVirtualKeyboard();
+                    }
+                }
+            });
+
             window.electronAPI.onScanProgress((data) => {
                 const percent = Math.round((data.current / data.total) * 100);
                 document.getElementById('scan-status-text').textContent = `Scanning ${data.subnet}.${data.current}/${data.total}...`;
                 document.getElementById('scan-percentage').textContent = `${percent}%`;
                 document.getElementById('scan-progress-bar').style.width = `${percent}%`;
             });
+        }
+
+        function loadTouchKeyboardSetting() {
+            const saved = localStorage.getItem('moonitor_touch_keyboard');
+            touchKeyboardEnabled = saved === 'true';
+            document.getElementById('touch-keyboard-toggle').checked = touchKeyboardEnabled;
+        }
+
+        function toggleTouchKeyboardSetting() {
+            touchKeyboardEnabled = document.getElementById('touch-keyboard-toggle').checked;
+            localStorage.setItem('moonitor_touch_keyboard', touchKeyboardEnabled);
+            showToast(touchKeyboardEnabled ? 'Touchscreen keyboard enabled' : 'Touchscreen keyboard disabled');
+            if (!touchKeyboardEnabled) hideVirtualKeyboard();
+        }
+
+        function showVirtualKeyboard() {
+            document.getElementById('virtual-keyboard').classList.remove('hidden');
+            document.getElementById('virtual-keyboard').classList.add('flex');
+        }
+
+        function hideVirtualKeyboard() {
+            document.getElementById('virtual-keyboard').classList.add('hidden');
+            document.getElementById('virtual-keyboard').classList.remove('flex');
+            activeInputTarget = null;
+        }
+
+        function toggleKeyboardShift() {
+            keyboardShiftActive = !keyboardShiftActive;
+            const btn = document.getElementById('keyboard-shift-btn');
+            if (keyboardShiftActive) {
+                btn.classList.add('theme-accent', 'text-white');
+            } else {
+                btn.classList.remove('theme-accent', 'text-white');
+            }
+        }
+
+        function sendKey(key) {
+            if (!activeInputTarget) return;
+            let val = activeInputTarget.value || '';
+            const start = activeInputTarget.selectionStart || val.length;
+            const end = activeInputTarget.selectionEnd || val.length;
+
+            if (key === 'backspace') {
+                if (start > 0 && start === end) {
+                    val = val.substring(0, start - 1) + val.substring(end);
+                    activeInputTarget.value = val;
+                    activeInputTarget.setSelectionRange(start - 1, start - 1);
+                } else if (start !== end) {
+                    val = val.substring(0, start) + val.substring(end);
+                    activeInputTarget.value = val;
+                    activeInputTarget.setSelectionRange(start, start);
+                }
+            } else if (key === 'enter') {
+                hideVirtualKeyboard();
+                activeInputTarget.blur();
+                return;
+            } else {
+                let charToSend = key;
+                if (keyboardShiftActive && key.length === 1) {
+                    charToSend = key.toUpperCase();
+                }
+                val = val.substring(0, start) + charToSend + val.substring(end);
+                activeInputTarget.value = val;
+                activeInputTarget.setSelectionRange(start + 1, start + 1);
+            }
+            
+            // Trigger input event for frameworks/listeners
+            activeInputTarget.dispatchEvent(new Event('input', { bubbles: true }));
         }
 
         function applyThemeColors(t) {
@@ -603,6 +753,7 @@
             document.getElementById('view-webview').classList.remove('flex');
             document.getElementById('view-settings').classList.add('hidden');
             document.getElementById('view-settings').classList.remove('flex');
+            hideVirtualKeyboard();
 
             if (tabId === 'dashboard') {
                 document.getElementById('view-dashboard').classList.remove('hidden');
