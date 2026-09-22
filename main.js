@@ -10,11 +10,27 @@ let mainWindow;
 const configPath = path.join(app.getPath('userData'), 'printers.json');
 const PORT = 3000;
 
+// Helper to get prioritized local network IP
+function getLocalIP() {
+  let ipAddress = '127.0.0.1';
+  const interfaces = os.networkInterfaces();
+  for (const name of Object.keys(interfaces)) {
+    for (const netInfo of interfaces[name]) {
+      if (netInfo.family === 'IPv4' && !netInfo.internal) {
+        if (netInfo.address.startsWith('192.168.') || netInfo.address.startsWith('10.') || netInfo.address.startsWith('172.')) {
+          ipAddress = netInfo.address;
+          break;
+        }
+      }
+    }
+  }
+  return ipAddress;
+}
+
 // HTTP Server for Dual-Mode (Local Kiosk + Network Browser Access)
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, `http://${req.headers.host}`);
   
-  // Enable CORS for local network testing
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -51,17 +67,8 @@ const server = http.createServer((req, res) => {
       });
     }
   } else if (url.pathname === '/api/system-info') {
-    let ipAddress = '127.0.0.1';
-    const interfaces = os.networkInterfaces();
-    for (const name of Object.keys(interfaces)) {
-      for (const netInfo of interfaces[name]) {
-        if (netInfo.family === 'IPv4' && !netInfo.internal) {
-          ipAddress = netInfo.address;
-        }
-      }
-    }
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ ip: ipAddress, port: PORT }));
+    res.end(JSON.stringify({ ip: getLocalIP(), port: PORT }));
   } else if (url.pathname === '/api/wifi-list') {
     exec('nmcli -t -f SSID,SIGNAL,ACTIVE device wifi', (err, stdout) => {
       if (err) {
@@ -120,13 +127,11 @@ const server = http.createServer((req, res) => {
       res.end(JSON.stringify({ success: !err }));
     });
   } else if (url.pathname === '/api/scan-subnet') {
-    // Subnet scan endpoint returning JSON result
     runSubnetScanAsync().then(discovered => {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(discovered));
     });
   } else {
-    // Serve static files (index.html)
     let filePath = path.join(__dirname, url.pathname === '/' ? 'index.html' : url.pathname);
     fs.readFile(filePath, (err, data) => {
       if (err) {
@@ -162,7 +167,6 @@ function createWindow() {
     }
   });
 
-  // Load via local HTTP server so Electron and external browsers share identical code paths
   mainWindow.loadURL(`http://localhost:${PORT}`);
 }
 
@@ -178,7 +182,7 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
 });
 
-// Existing IPC Handlers (retained for compatibility)
+// IPC Handlers
 ipcMain.handle('get-printers', () => {
   try {
     if (fs.existsSync(configPath)) {
@@ -225,16 +229,7 @@ ipcMain.handle('system-shutdown', () => {
 });
 
 ipcMain.handle('get-system-info', () => {
-  let ipAddress = '127.0.0.1';
-  const interfaces = os.networkInterfaces();
-  for (const name of Object.keys(interfaces)) {
-    for (const netInfo of interfaces[name]) {
-      if (netInfo.family === 'IPv4' && !netInfo.internal) {
-        ipAddress = netInfo.address;
-      }
-    }
-  }
-  return { ip: ipAddress, port: PORT };
+  return { ip: getLocalIP(), port: PORT };
 });
 
 async function runSubnetScanAsync() {
