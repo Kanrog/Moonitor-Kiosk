@@ -14,8 +14,8 @@ if [ ! -d "$INSTALL_DIR" ]; then
   exit 1
 fi
 
-echo "[+] Copying latest application files to $INSTALL_DIR..."
-rsync -av --exclude='.git' ./ "$INSTALL_DIR/"
+echo "[+] Copying latest application files (including .git) to $INSTALL_DIR..."
+rsync -av ./ "$INSTALL_DIR/"
 
 echo "[+] Updating Node.js dependencies..."
 cd "$INSTALL_DIR"
