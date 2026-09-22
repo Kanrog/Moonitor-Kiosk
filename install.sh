@@ -74,6 +74,13 @@ echo "[+] Installing project NPM dependencies in $INSTALL_DIR..."
 cd "$INSTALL_DIR"
 npm install
 
+echo "[+] Installing project NPM dependencies in $INSTALL_DIR..."
+cd "$INSTALL_DIR"
+npm install
+
+echo "[+] Setting permissions for user $TARGET_USER..."
+chown -R "$TARGET_USER:$TARGET_USER" "$INSTALL_DIR"
+
 echo "[+] Configuring automatic login on tty1 for user: $TARGET_USER..."
 mkdir -p /etc/systemd/system/getty@tty1.service.d
 cat << EOF > /etc/systemd/system/getty@tty1.service.d/autologin.conf
