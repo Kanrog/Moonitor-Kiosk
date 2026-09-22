@@ -191,19 +191,24 @@ ipcMain.handle('scan-subnet', async () => {
 
 ipcMain.handle('wifi-list', async () => {
   return new Promise((resolve) => {
-    exec('nmcli -t -f SSID,SIGNAL device wifi', (err, stdout) => {
+    exec('nmcli -t -f SSID,SIGNAL,ACTIVE device wifi', (err, stdout) => {
       if (err) {
         resolve([
-          { ssid: 'MakerSpace_IoT', signal: '90' },
-          { ssid: 'Workshop_5G', signal: '75' },
-          { ssid: 'Guest_Network', signal: '50' }
+          { ssid: 'MakerSpace_IoT', signal: '90', active: true },
+          { ssid: 'Workshop_5G', signal: '75', active: false },
+          { ssid: 'Guest_Network', signal: '50', active: false }
         ]);
         return;
       }
       const networks = stdout.split('\n').filter(Boolean).map(line => {
-        const [ssid, signal] = line.split(':');
-        return { ssid, signal };
+        const parts = line.split(':');
+        const ssid = parts[0];
+        const signal = parts[1];
+        const active = parts[2] === 'yes' || parts[2] === 'Active';
+        return { ssid, signal, active };
       });
+      // Sort active network to the top
+      networks.sort((a, b) => (b.active ? 1 : 0) - (a.active ? 1 : 0));
       resolve(networks);
     });
   });
